@@ -1,4 +1,6 @@
-# CS4641 — 131 — Project: [Title]
+# [Project Title]
+CS4641 Group 131
+[names]
 
 **Proposal:** <https://github.gatech.edu/pages/doquinn3/cs4641-131-project/>
 
