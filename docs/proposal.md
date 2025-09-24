@@ -1,5 +1,5 @@
-# <Project Title>
-<names>
+# [Project Title]
+[names]
 
 ## Introduction
 
