@@ -172,3 +172,45 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Common serialized model/checkpoint formats
+*.pkl
+*.joblib
+*.h5
+*.hdf5
+*.onnx
+*.pt
+*.pth
+*.ckpt
+
+# Experiment logs & run dirs (e.g., tensorboard, wandb)
+lightning_logs/
+tensorboard/
+wandb/
+mlruns/
+
+# --- Conda/Mamba odds & ends (envs should never live in repo) ---
+.conda/
+.mamba/
+env/
+envs/
+.venv/
+.ENV/
+.env
+
+# --- Notebooks noise ---
+.ipynb_checkpoints/
+
+# --- Editors/OS (cross-platform team safety) ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+~$*
+
+# --- GitHub Pages / Jekyll local build caches (keep docs/ content tracked) ---
+.jekyll-cache/
+.sass-cache/
+_site/
