@@ -4,24 +4,15 @@ Devon O'Quinn, Shayali Patel, Nicholas Nitsche, Julien Perez, Mutimu Njenga
 ## Introduction
 
 ### Literature Review
-VWAP is “the price a ‘naive’ trader can expect to obtain”; buyers should fill below it and sellers above it [1]. The anchored VWAP (AVWAP) is essentially the same, but starts 
-computing VWAP at a user‑set time that is different from the start of the trading day. Because AVWAP 
-starts computing from a chosen anchor and can measure over any time inverval, if price stays above a 
-rising AVWAP there is a bullish trend; if price falls below a declining AVWAP there is a bearish 
-trend [1]. Bollinger Bands summarize trend and volatility; prices near the upper/lower band indicate overbought/oversold conditions. They are useful for mean‑reversion but are not predictive [2]. These signals can prompt over‑trading if used naively;  machine learning can be used to determine the best opportunities and set exits based on data 
-rather than heuristic rules.
+VWAP is “the price a ‘naive’ trader can expect to obtain”; buyers should fill below it and sellers above it [1]. The anchored VWAP (AVWAP) is essentially the same, but starts computing VWAP at a user‑set time. Because AVWAP starts computing from a chosen anchor and can measure over any time interval, if the price stays above a rising AVWAP, there is a bullish trend; if the price falls below a declining AVWAP, there is a bearish trend [1]. Bollinger Bands summarize trend and volatility; prices near the upper/lower band indicate overbought/oversold conditions. They are useful for mean‑reversion but are not predictive [2]. These signals can prompt over‑trading if used naively; machine learning can determine the best opportunities and set exits based on data rather than heuristic rules.
 
-Labels are extremley important. three barriers for each event: a profit‑taking level, a stop‑loss level, and a vertical barrier representing a maximum holding period; the event’s label depends on which barrier is hit first [3]. Event‑based sampling (CUSUM) and activity‑based bars regularize information flow and reduce time‑bar heteroskedasticity [3].
-
+Labels are essential. Thus, use three barriers for each event: a profit‑taking level, a stop‑loss level, and a vertical barrier representing a maximum holding period; the event’s label depends on which barrier is hit first [3]. Event‑based sampling (CUSUM) and activity‑based bars regularize information flow and reduce time‑bar heteroskedasticity [3].
 Gaussian mixture models assign probabilities under a mixture of Gaussians, yielding a soft “overextension score” from joint features (VWAP distance, Bollinger position, short‑term momentum, relative volume) [4]. GMMs adapt to regime shifts and heavy tails better than simple z‑scores.
 
-Random Forests average many decision tree classifiers, lowering variance and are well suited to nonlinear, correlated data [5]. However, naive bootstrap aggregating can overstate performance when labels  overlap; using sequential bootstrap and limiting the number of samples to the average uniqueness of  labels is a better method [3]. Probabilities map to position sizes and whether to trade or not to trade.
+Random Forests average many decision tree classifiers, lowering variance, and are well-suited to nonlinear, correlated data [5]. However, naive bootstrap aggregating can overstate performance when labels overlap; using sequential bootstrap and limiting the number of samples to the average uniqueness of labels is a better method [3]. Probabilities map to position sizes and whether to trade or not to trade.
 
 Gradient‑boosted trees build predictors by correcting residuals and can be adapted to quantile regression, a useful tool for exit sizing [6]. Estimating conditional quantiles (e.g., 10th/50th/90th) allows for dynamic stops and targets; additionally, tree-based quantile methods outperform classical quantile methods in high-dimensional, nonlinear settings. [7].
-
-Lastly, model evaluation requires careful consideration. Traditional random test/train splits fails 
-for financial data because features and labels are serially correlated; today’s market conditions are 
-influenced by yesterday’s [3]. Purged k‑fold with embargo removes overlap between samples, and CPCV returns a distribution of out‑of‑sample metrics from purged k-fold, providing a more reliable measure of model performance [3].
+Lastly, model evaluation requires careful consideration. Traditional random test/train splits fail for financial data because features and labels are serially correlated [3]. Purged k‑fold with embargo removes overlap between samples, and CPCV returns a distribution of out‑of‑sample metrics from purged k-fold, providing a more reliable measure of model performance [3].
 
 ### Dataset Description
 Intraday U.S. equities from Georgia Tech’s Bloomberg Terminal.
@@ -29,10 +20,10 @@ Intraday U.S. equities from Georgia Tech’s Bloomberg Terminal.
 ## Objective
 
 ### Problem
-Given an overextension event where price is far from an AVWAP, determine whether the price will revert sufficiently within the next 15–30 minutes to yield a profitable mean‑reversion trade. If a profitable reversion is likely, predict the distribution of return magnitudes to set dynamic take‑profit and stop‑loss levels.
+Given an overextension event where price is far from an AVWAP, determine whether the price will revert sufficiently within the next 15–30 minutes to yield a profitable mean‑reversion trade. If a profitable reversion is likely, predict the distribution of return magnitudes to set dynamic take‑profit and stop‑loss levels.
 
 ### Motivation
-Low capital trading favors low‑turnover, high‑conviction trades. AVWAP/Bands are popular but trading every deviation results in slippage and costs. We combine unsupervised detection, supervised filtering, and quantile exits to build a successful mean‑reversion strategy.
+Low capital trading favors low‑turnover, high‑conviction trades. AVWAP/Bands are popular, but trading every deviation results in slippage and costs. We combine unsupervised detection, supervised filtering, and quantile exits to build a successful mean‑reversion strategy.
 
 ## Methods
 
@@ -40,7 +31,7 @@ Low capital trading favors low‑turnover, high‑conviction trades. AVWAP/Bands
 1. **Stock selection.** Liquid U.S. equities with high ADV, tight spreads, active trading, and no disruptive events.
 2. **Data window.** Regular hours, excluding the first and last five minutes. We remove duplicates, halts, and out‑of‑order samples.
 3. **Bar construction.** Aggregate ticks into volume or dollar bars to normalize information content.
-4. **Feature engineering.** VWAP distance (wxpressed as a z-score), Bollinger position, short‑term momentum, relative volume, time‑of‑day, and a five‑minute recent trading context feature.
+4. **Feature engineering.** VWAP distance (expressed as a z-score), Bollinger position, short‑term momentum, relative volume, time‑of‑day, and a five‑minute recent trading context feature.
 5. **Normalization.** Standardize per asset and per session for comparability.
 6. **Labeling.** Triple‑barrier labels are used. A trade is successful if price reverts before the stop or time limit (15–30 minutes).
 7. **Splitting.** Purged k‑fold with embargo to prevent information leakage.
@@ -53,14 +44,14 @@ Low capital trading favors low‑turnover, high‑conviction trades. AVWAP/Bands
 ## Results & Discussion
 
 ### Metrics
-We will report mean and standard deviation of F1 scores and negative log‑loss from purged k‑fold cross‑validation for the classifier, along with the proportion of events the model chooses to trade. For the exit model, we will evaluate the calibration of predicted quantiles and use out‑of‑sample profit‑and‑loss per trade and Sharpe ratio as final metrics. The CPCV procedure produces a distribution of Sharpe ratios, allowing us to compute confidence intervals and assess the stability of the strategy.
+We will report the mean and standard deviation of F1 scores and negative log‑loss from purged k‑fold cross‑validation for the classifier, along with the proportion of events the model chooses to trade. For the exit model, we will evaluate the calibration of predicted quantiles and use out‑of‑sample profit‑and‑loss per trade and Sharpe ratio as final metrics. The CPCV procedure produces a distribution of Sharpe ratios, allowing us to compute confidence intervals and assess the stability of the strategy.
 
 ### Project Goals
 - Build an intraday ML pipeline across multiple assets.
 - Outperform naive heuristic trading.
 
 ### Expected Outcomes
-We expect the strategy to trade only a small number of overextensions, with a sucess rate significantly above random. We also expect it to perform better than standard heuristic trading.
+We expect the strategy to trade only a small number of overextensions, with a success rate significantly above random. We also expect it to perform better than standard heuristic trading.
 
 ## Team Logistics
 
