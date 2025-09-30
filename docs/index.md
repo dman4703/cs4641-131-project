@@ -89,5 +89,4 @@ We expect the strategy to trade only a small number of overextensions, with a su
 
 [6] J. H. Friedman, “Greedy Function Approximation: A Gradient Boosting Machine,” Annals of Statistics, vol. 29, no. 5, pp. 1189–1232, 2001. doi:10.1214/aos/1013203451.
 
-[7] Quantile Prediction with Trees — nonparametric quantile estimation (fits your exit-sizing idea)
-N. Meinshausen, “Quantile Regression Forests,” Journal of Machine Learning Research, vol. 7, pp. 983–999, 2006.
+[7] N. Meinshausen, “Quantile Regression Forests,” Journal of Machine Learning Research, vol. 7, pp. 983–999, 2006.
