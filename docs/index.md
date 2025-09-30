@@ -13,7 +13,7 @@ A Gaussian mixture models (GMM) is a soft clustering algoirthm that assumes the 
 
 A Random Forest is an ensemble meta‑estimator that fits many decision tree classifiers on random sub‑samples of the data and averages their predictions [5]. Random Forests reduce variance and overfitting by injecting randomness into both the data sampling and feature subsampling. López de Prado cautions that naïve bootstrap aggregating can overstate performance when labels overlap; using sequential bootstrap and limiting the number of samples to the average uniqueness of labels is a better method [3]. For opportunity classification, Random Forests are well suited because intraday features are nonlinear, noisy, and often interact (e.g., a momentum burst may only matter in combination with a volume surge). Additionally, this model is robust to outliers and adaptable to the differing qualities of VWAP distance, Bollinger position, trend slope, and time-of-day encodings. In the trading context, the model’s output probabilities map to position sizes and whether to trade or not to trade.
 
-Gradient-boosted models (GBMs) build strong predictors by sequentially adding decision trees that correct residuals [6]. In particular, GBMs can be adapted to quantile regression, allowing for estimation of conditional quantiles (e.g., price reversion magnitude). Recent work shows that gradient-boosted quantile models outperform classical quantile regression in high-dimensional, nonlinear settings [7]. In exit modeling, this ability is critical: the target is to set dynamic stops and take-profits based on different percentiles (e.g. 10th, 50th, 90th quantiles) of the future price reversal distribution rather than targeting a single expected reversion (mean). Additionally, the exit magnitudes are often driven by nonlinear interactions between features. Thus, GBM is a good candidate for exit modeling. 
+Gradient-boosted models (GBMs) build strong predictors by sequentially adding decision trees that correct residuals [6]. In particular, GBMs can be adapted to quantile regression, allowing for estimation of conditional quantiles (e.g., price reversion magnitude). Recent work shows that tree-based quantile estimation outperform classical quantile methods in high-dimensional, nonlinear settings [7]. In exit modeling, this ability is critical: the target is to set dynamic stops and take-profits based on different percentiles (e.g. 10th, 50th, 90th quantiles) of the future price reversal distribution rather than targeting a single expected reversion (mean). Additionally, the exit magnitudes are often driven by nonlinear interactions between features. Thus, GBM is a good candidate for exit modeling. 
 
 Lastly, model evaluation requires careful consideration. Traditional random test/train splits fails for financial data because features and labels are serially correlated; today’s market conditions are influenced by yesterday’s [3]. López de Prado discusses the purged k-fold with embargo: in this approach, folds are created from contiguous time blocks. Training samples that overlap in time with the test fold are removed, and a short “embargo” period after the test fold is also excluded to prevent near-term dependence. This leads into Combinatorial Purged Cross-Validation (CPCV), which considers every possible combination of such purged and embargoed folds. Instead of giving a single performance estimate, CPCV produces a distribution of out-of-sample metrics, providing a more reliable measure of model performance and reducing the risk of false discoveries or overfitting [3].
 
@@ -79,10 +79,11 @@ We expect the strategy to trade only a small number of overextensions, with a su
 
 [3] M. López de Prado, Advances in Financial Machine Learning. Wiley, 2018.
 
-[4]
+[4] C. M. Bishop, Pattern Recognition and Machine Learning. New York, NY, USA: Springer, 2006, ch. 9 (Mixture Models & EM).
 
-[5]
+[5] L. Breiman, “Random Forests,” Machine Learning, vol. 45, no. 1, pp. 5–32, 2001. doi:10.1023/A:1010933404324.
 
-[6]
+[6] J. H. Friedman, “Greedy Function Approximation: A Gradient Boosting Machine,” Annals of Statistics, vol. 29, no. 5, pp. 1189–1232, 2001. doi:10.1214/aos/1013203451.
 
-[7]
+[7] Quantile Prediction with Trees — nonparametric quantile estimation (fits your exit-sizing idea)
+N. Meinshausen, “Quantile Regression Forests,” Journal of Machine Learning Research, vol. 7, pp. 983–999, 2006.
