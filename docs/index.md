@@ -1,4 +1,4 @@
-# High‑Conviction Mean Reversion Trader Using Anchored VWAP
+# High‑Conviction Mean Reversion Trader
 Devon O'Quinn, Shayali Patel, Nicholas Nitsche, Julien Perez, Mutimu Njenga
 
 ## Introduction
