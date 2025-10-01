@@ -1,4 +1,4 @@
-# [Mean Reversion Trader]
+# Mean Reversion Trader
 CS4641 Group 131
 
 Devon O'Quinn, Shayali Patel, Nicholas Nitsche, Julien Perez, Mutimu Njenga
