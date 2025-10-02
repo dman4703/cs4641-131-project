@@ -29,8 +29,11 @@ Given an overextension event where price is far from an AVWAP, determine whether
 ## Methods
 
 ### Data Preprocessing
-1. **Stock selection.** Liquid U.S. equities with high ADV, tight spreads, active trading, and no disruptive events.
-2. **Data window.** Regular hours, excluding the first and last five minutes. We remove duplicates, halts, and out‑of‑order samples.
+1. **Stock selection.** We will assume a trading capital of $2,500. Stocks will be selected based on the following criteria:
+    - Price band: $10–$100, so we can buy multiple lots without over-allocating capital.
+    - Liquidity: high average volume and tight bid-ask spreads to keep costs low.
+    - Volatility: moderate intraday range.
+2. **Data window.** Regular hours, excluding the first and last five minutes. We remove duplicates, halts, and out‑of‑order samples. We will collect data over 5 days.
 3. **Bar construction.** Aggregate ticks into volume or dollar bars to normalize information content.
 4. **Feature engineering.** VWAP distance (expressed as a z-score), Bollinger position, short‑term momentum, relative volume, time‑of‑day, and a five‑minute recent trading context feature.
 5. **Normalization.** Standardize per asset and per session for comparability.
