@@ -2,9 +2,10 @@
 Devon O'Quinn, Shayali Patel, Nicholas Nitsche, Julien Perez, Mutimu Njenga
 
 ## Introduction
+Mean reversion trading is based on the principle that prices tend to revert toward their average after periods of overextension. To develop a consistent strategy, we leverage machine learning to extract predictive signals from market data and optimize performance for low-capital intraday trading.
 
 ### Literature Review
-VWAP is “the price a ‘naive’ trader can expect to obtain”; buyers should fill below it and sellers above it [1]. The anchored VWAP (AVWAP) is essentially the same, but starts computing VWAP at a user‑set time. Because AVWAP starts computing from a chosen anchor and can measure over any time interval, if the price stays above a rising AVWAP, there is a bullish trend; if the price falls below a declining AVWAP, there is a bearish trend [1]. Bollinger Bands summarize trend and volatility; prices near the upper/lower band indicate overbought/oversold conditions. They are useful for mean‑reversion but are not predictive [2]. These signals can prompt over‑trading if used naively; machine learning can determine the best opportunities and set exits based on data rather than heuristic rules.
+There are two notable features to consider for mean reversion trading. VWAP is “the price a ‘naive’ trader can expect to obtain”; buyers should fill below it and sellers above it [1]. The anchored VWAP (AVWAP) is essentially the same, but starts computing VWAP at a user‑set time. Because AVWAP starts computing from a chosen anchor and can measure over any time interval, if the price stays above a rising AVWAP, there is a bullish trend; if the price falls below a declining AVWAP, there is a bearish trend [1]. Bollinger Bands summarize trend and volatility; prices near the upper/lower band indicate overbought/oversold conditions. They serve as a useful secondary indicator since they are not predictive [2]. Using features such as these, ML can be used to implement a statistically sound and consistent trading strategy.
 
 Labels are essential. Thus, use three barriers for each event: a profit‑taking level, a stop‑loss level, and a vertical barrier representing a maximum holding period; the event’s label depends on which barrier is hit first [3]. Event‑based sampling (CUSUM) and activity‑based bars regularize information flow and reduce time‑bar heteroskedasticity [3].
 Gaussian mixture models assign probabilities under a mixture of Gaussians, yielding a soft “overextension score” from joint features (VWAP distance, Bollinger position, short‑term momentum, relative volume) [4]. GMMs adapt to regime shifts and heavy tails better than simple z‑scores.
@@ -17,13 +18,13 @@ Lastly, model evaluation requires careful consideration. Traditional random test
 ### Dataset Description
 Intraday U.S. equities from Georgia Tech’s Bloomberg Terminal.
 
-## Objective
+## Problem Definition
 
-### Problem
-Given an overextension event where price is far from an AVWAP, determine whether the price will revert sufficiently within the next 15–30 minutes to yield a profitable mean‑reversion trade. If a profitable reversion is likely, predict the distribution of return magnitudes to set dynamic take‑profit and stop‑loss levels.
+### Problem & Motivation
+Low capital trading favors low‑turnover, high‑conviction trades. Traditional retail day trading strategies utilize naive heuristic rules that result in bad and inconsistent profit margins; additionally, they are riskier and less flexible. We aim to implement a successful and consistent mean‑reversion strategy through an ML Pipeline.
 
-### Motivation
-Low capital trading favors low‑turnover, high‑conviction trades. AVWAP/Bands are popular, but trading every deviation results in slippage and costs. We combine unsupervised detection, supervised filtering, and quantile exits to build a successful mean‑reversion strategy.
+### Objective
+Given an overextension event where price is far from an AVWAP, determine whether the price will revert sufficiently within the next 15–30 minutes to yield a profitable mean‑reversion trade. If a profitable reversion is likely, determine where to set dynamic take‑profit and stop‑loss levels to maximize returns by predicting the distribution of return magnitudes and executing the trade accordingly.
 
 ## Methods
 
@@ -33,7 +34,7 @@ Low capital trading favors low‑turnover, high‑conviction trades. AVWAP/Bands
 3. **Bar construction.** Aggregate ticks into volume or dollar bars to normalize information content.
 4. **Feature engineering.** VWAP distance (expressed as a z-score), Bollinger position, short‑term momentum, relative volume, time‑of‑day, and a five‑minute recent trading context feature.
 5. **Normalization.** Standardize per asset and per session for comparability.
-6. **Labeling.** Triple‑barrier labels are used. A trade is successful if price reverts before the stop or time limit (15–30 minutes).
+6. **Labeling.** Triple‑barrier labels are used. A trade is successful if the price reverts before the stop or time limit (15–30 minutes).
 7. **Splitting.** Purged k‑fold with embargo to prevent information leakage.
 
 ### Models
