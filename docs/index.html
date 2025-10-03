@@ -16,6 +16,85 @@
                 width: 95% !important;
             }
         }
+
+        /* Slideshow Styles */
+        .slideshow-container {
+            position: relative;
+            max-width: 800px;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .slide {
+            display: none;
+            text-align: center;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        .slide img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .slide-caption {
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-top: 1px solid #ddd;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .slideshow-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+
+        .slideshow-nav:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .prev {
+            left: 10px;
+        }
+
+        .next {
+            right: 10px;
+        }
+
+        .dots-container {
+            text-align: center;
+            padding: 10px;
+            background-color: #f8f8f8;
+        }
+
+        .dot {
+            height: 12px;
+            width: 12px;
+            margin: 0 4px;
+            background-color: #bbb;
+            border-radius: 50%;
+            display: inline-block;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .dot.active {
+            background-color: #333;
+        }
     </style>
 </head>
 <body>
@@ -66,7 +145,46 @@
         prints, and standardize per asset/session.
     </p>
 
-    <h2><u>Problem Definition</u></h2>
+    <div class="slideshow-container">
+        <div class="slide active">
+            <img src="./assets/img/AAPL_BQ.gif" alt="AAPL Bloomberg Quote">
+            <div class="slide-caption">AAPL - Bloomberg Quote</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/AAPL_VWAP.gif" alt="AAPL VWAP">
+            <div class="slide-caption">AAPL - VWAP Analysis</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/AAPL_HP.gif" alt="AAPL Historic Price Table">
+            <div class="slide-caption">AAPL - Historic Price Table</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/AAPL_QR.gif" alt="AAPL Quote Recap">
+            <div class="slide-caption">AAPL - Quote Recap</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/AAPL_GIP.gif" alt="AAPL GIP">
+            <div class="slide-caption">AAPL - Intraday Price Graph</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/AAPL_IGPO.gif" alt="AAPL IGPO">
+            <div class="slide-caption">AAPL - Intraday Bar Graph</div>
+        </div>
+
+        <button class="slideshow-nav prev" onclick="changeSlide(-1)">&#10094;</button>
+        <button class="slideshow-nav next" onclick="changeSlide(1)">&#10095;</button>
+
+        <div class="dots-container">
+            <span class="dot active" onclick="currentSlide(0)"></span>
+            <span class="dot" onclick="currentSlide(1)"></span>
+            <span class="dot" onclick="currentSlide(2)"></span>
+            <span class="dot" onclick="currentSlide(3)"></span>
+            <span class="dot" onclick="currentSlide(4)"></span>
+            <span class="dot" onclick="currentSlide(5)"></span>
+        </div>
+    </div>
+
+ Q    <h2><u>Problem Definition</u></h2>
 
     <h3>Problem & Motivation</h3>
     <p>
@@ -192,6 +310,48 @@
     <p>[6] J. H. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine," <em>Annals of Statistics</em>, vol. 29, no. 5, pp. 1189–1232, 2001. DOI: 10.1214/aos/1013203451</p>
 
     <p>[7] N. Meinshausen, "Quantile Regression Forests," <em>Journal of Machine Learning Research</em>, vol. 7, pp. 983–999, 2006.</p>
+
+    <script>
+        let currentSlideIndex = 0;
+
+        function changeSlide(direction) {
+            const slides = document.querySelectorAll('.slide');
+            const dots = document.querySelectorAll('.dot');
+            
+            // Remove active class from current slide and dot
+            slides[currentSlideIndex].classList.remove('active');
+            dots[currentSlideIndex].classList.remove('active');
+            
+            // Update index
+            currentSlideIndex = (currentSlideIndex + direction + slides.length) % slides.length;
+            
+            // Add active class to new slide and dot
+            slides[currentSlideIndex].classList.add('active');
+            dots[currentSlideIndex].classList.add('active');
+        }
+
+        function currentSlide(index) {
+            const slides = document.querySelectorAll('.slide');
+            const dots = document.querySelectorAll('.dot');
+            
+            // Remove active class from current slide and dot
+            slides[currentSlideIndex].classList.remove('active');
+            dots[currentSlideIndex].classList.remove('active');
+            
+            // Update index
+            currentSlideIndex = index;
+            
+            // Add active class to new slide and dot
+            slides[currentSlideIndex].classList.add('active');
+            dots[currentSlideIndex].classList.add('active');
+        }
+
+        // Optional: Auto-advance slides every 5 seconds
+        // Uncomment the lines below if you want automatic slideshow
+        // setInterval(() => {
+        //     changeSlide(1);
+        // }, 5000);
+    </script>
 </body>
 </html>
 
