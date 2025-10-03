@@ -15,7 +15,7 @@ Gradient‑boosted trees build predictors by correcting residuals and can be ada
 Lastly, model evaluation requires careful consideration. Traditional random test/train splits fail for financial data because features and labels are serially correlated [3]. Purged k‑fold with embargo removes overlap between samples, and CPCV returns a distribution of out‑of‑sample metrics from purged k-fold, providing a more reliable measure of model performance [3].
 
 ### Dataset Description
-Intraday U.S. equities from Georgia Tech’s Bloomberg Terminal.
+Intraday U.S. equities from Georgia Tech’s Bloomberg Terminal. We will collect data over 5 days.
 
 ## Problem Definition
 
@@ -32,7 +32,7 @@ Given an overextension event where price is far from an AVWAP, determine whether
     - Price band: $10–$100, so we can buy multiple lots without over-allocating capital.
     - Liquidity: high average volume and tight bid-ask spreads to keep costs low.
     - Volatility: moderate intraday range.
-2. **Data window.** Regular hours, excluding the first and last five minutes. We remove duplicates, halts, and out‑of‑order samples. We will collect data over 5 days.
+2. **Data window.** Regular hours, excluding the first and last five minutes. We remove duplicates, halts, and out‑of‑order samples.
 3. **Bar construction.** Aggregate ticks into volume or dollar bars to normalize information content.
 4. **Feature engineering.** VWAP distance (expressed as a z-score), Bollinger position, short‑term momentum, relative volume, time‑of‑day, and a five‑minute recent trading context feature.
 5. **Normalization.** Standardize per asset and per session for comparability.
@@ -59,7 +59,7 @@ We expect the strategy to trade only a small number of overextensions, with a su
 ## Team Logistics
 
 ### Gantt Chart
-...
+![Inital Proposed Gantt Chart](./assets/img/ganttchart.png)
 
 ### Contribution Table
 | Name            | Proposal Contributions        |
