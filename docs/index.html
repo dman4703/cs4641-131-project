@@ -30,8 +30,9 @@
 
     <p>Random Forests average many decision tree classifiers, lowering variance, and are well-suited to nonlinear, correlated data [5]. However, naive bootstrap aggregating can overstate performance when labels overlap; using sequential bootstrap and limiting the number of samples to the average uniqueness of labels is a better method [3]. Probabilities map to position sizes and whether to trade or not to trade.</p>
 
-    <p>Gradient‑boosted trees build predictors by correcting residuals and can be adapted to quantile regression, a useful tool for exit sizing [6]. Estimating conditional quantiles (e.g., 10th/50th/90th) allows for dynamic stops and targets; additionally, tree-based quantile methods outperform classical quantile methods in high-dimensional, nonlinear settings. [7].
-    Lastly, model evaluation requires careful consideration. Traditional random test/train splits fail for financial data because features and labels are serially correlated [3]. Purged k‑fold with embargo removes overlap between samples, and CPCV returns a distribution of out‑of‑sample metrics from purged k-fold, providing a more reliable measure of model performance [3].</p>
+    <p>Gradient‑boosted trees build predictors by correcting residuals and can be adapted to quantile regression, a useful tool for exit sizing [6]. Estimating conditional quantiles (e.g., 10th/50th/90th) allows for dynamic stops and targets; additionally, tree-based quantile methods outperform classical quantile methods in high-dimensional, nonlinear settings. [7].</p>
+
+    <p>Lastly, model evaluation requires careful consideration. Traditional random test/train splits fail for financial data because features and labels are serially correlated [3]. Purged k‑fold with embargo removes overlap between samples, and CPCV returns a distribution of out‑of‑sample metrics from purged k-fold, providing a more reliable measure of model performance [3].</p>
 
     <h3>Dataset Description</h3>
     <p>Intraday U.S. equities from Georgia Tech's Bloomberg Terminal. We will collect data over 5 days.</p>
