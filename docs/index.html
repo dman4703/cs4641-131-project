@@ -70,7 +70,7 @@
         <li><strong>Supervised exit model.</strong> Gradient‑boosted trees (trained on the events predicted to revert with high probability) to predict τ‑quantiles; we will use the 0.1 quantile as the stop loss condition and the 0.5 quantile as the target condition.</li>
     </ol>
 
-    <h2><u>>Results & Discussion</u></h2>
+    <h2><u>Results & Discussion</u></h2>
 
     <h3>Metrics</h3>
     <p>For the GMM, we will look at the log-likelihood of events and stability of flagged overextensions. We will report the mean and standard deviation of F1 scores, negative log‑loss from purged k‑fold cross‑validation, and the proportion of events the model chooses to trade for the classifier. For the exit model, we will evaluate the calibration of predicted quantiles and use out‑of‑sample profit‑and‑loss per trade and Sharpe ratio as final metrics. The CPCV procedure produces a distribution of Sharpe ratios, allowing us to compute confidence intervals and assess the stability of the strategy.</p>
