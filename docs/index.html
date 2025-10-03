@@ -79,7 +79,14 @@
 
     <h3>Dataset Description</h3>
     <p>
-        Intraday U.S. equities from Georgia Tech's Bloomberg Terminal. We will collect data over 5 days.
+        Quantitative, structured intraday time-series for 10–20 liquid U.S. equities (stock selection detailed 
+        in Data Preprocessing), collected over 5 trading days during regular hours (excluding the first/last 
+        5 minutes) from the Georgia Tech Bloomberg Terminal. These raw inputs consist of trades (price/size), 
+        quotes (bid/ask and spread), and accumulated trading volume. We aggregate ticks into volume/dollar bars 
+        to equalize information content. Derived features include AVWAP distance (z-score), Bollinger-band 
+        position, short-term momentum, relative volume, and time-of-day. We (very tentatively) expect ~150–300 
+        bars per session per ticker, totaling ~7.5k–30k bars. We will remove halts, out-of-sequence/duplicate 
+        prints, and standardize per asset/session.
     </p>
 
     <h2><u>Problem Definition</u></h2>
@@ -104,16 +111,15 @@
 
     <h3>Data Preprocessing</h3>
     <ol>
-        <li><strong>Stock selection.</strong> We will assume a trading capital of $2,500. Stocks will be 
-            selected based on the following criteria:
+        <li><strong>Stock selection.</strong> For our universe, we will assume a trading capital of $2,500. 
+            Stocks will be selected based on the following criteria:
             <ul>
                 <li>Price band: $10–$100, so we can buy multiple lots without over-allocating capital.</li>
-                <li>Liquidity: high average volume and tight bid-ask spreads to keep costs low.</li>
-                <li>Volatility: moderate intraday range.</li>
+                <li>Liquidity: average daily volume in the upper 50 percentile.</li>
+                <li>Volatility: moderate intraday movement, around 3-5%.</li>
+                <li>Diversity: Selected from a variety of sectors.</li>
             </ul>
         </li>
-        <li><strong>Data window.</strong> Regular hours, excluding the first and last five minutes. We remove 
-            duplicates, halts, and out‑of‑order samples.</li>
         <li><strong>Bar construction.</strong> Aggregate ticks into volume or dollar bars to normalize 
             information content.</li>
         <li><strong>Feature engineering.</strong> VWAP distance (expressed as a z-score), Bollinger position, 
