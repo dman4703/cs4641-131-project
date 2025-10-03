@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="https://latex.now.sh/style.css">
     <style>
         body {
-            max-width: 50% !important;
+            min-width: 50% !important;
+            max-width: 1250px !important;
         }
     </style>
 </head>
@@ -23,7 +24,9 @@
     <h3>Literature Review</h3>
     <p>There are two notable features to consider for mean reversion trading. VWAP is "the price a 'naive' trader can expect to obtain"; buyers should fill below it and sellers above it [1]. The anchored VWAP (AVWAP) is essentially the same, but starts computing VWAP at a user‑set time. Because AVWAP starts computing from a chosen anchor and can measure over any time interval, if the price stays above a rising AVWAP, there is a bullish trend; if the price falls below a declining AVWAP, there is a bearish trend [1]. Bollinger Bands summarize trend and volatility; prices near the upper/lower band indicate overbought/oversold conditions. They serve as a useful secondary indicator since they are not predictive [2]. Using features such as these, ML can be used to implement a statistically sound and consistent trading strategy.</p>
 
-    <p>Labels are essential. The triple barrier method gives realistic labels: each event has a profit‑taking level, a stop‑loss level, and a vertical barrier representing a maximum holding period; the event's label depends on which barrier is hit first [3]. Event‑based sampling (CUSUM) and activity‑based bars regularize information flow and reduce time‑bar heteroskedasticity [3]. Gaussian mixture models assign probabilities under a mixture of Gaussians, and can yield a soft "overextension score" from joint features (VWAP distance, Bollinger position, short‑term momentum, relative volume) [4]. GMMs adapt to regime shifts and heavy tails better than simple z‑scores.</p>
+    <p>Labels are essential. The triple barrier method gives realistic labels: each event has a profit‑taking level, a stop‑loss level, and a vertical barrier representing a maximum holding period; the event's label depends on which barrier is hit first [3]. Event‑based sampling (CUSUM) and activity‑based bars regularize information flow and reduce time‑bar heteroskedasticity [3].</p>
+
+    <p>Gaussian mixture models assign probabilities under a mixture of Gaussians, and can be applied here to yield a soft "overextension score" from joint features (VWAP distance, Bollinger position, short‑term momentum, relative volume) [4]. GMMs adapt to regime shifts and heavy tails better than simple z‑scores.</p>
 
     <p>Random Forests average many decision tree classifiers, lowering variance, and are well-suited to nonlinear, correlated data [5]. However, naive bootstrap aggregating can overstate performance when labels overlap; using sequential bootstrap and limiting the number of samples to the average uniqueness of labels is a better method [3]. Probabilities map to position sizes and whether to trade or not to trade.</p>
 
