@@ -59,9 +59,10 @@ We expect the strategy to trade only a small number of overextensions, with a su
 ## Team Logistics
 
 ### Gantt Chart
-![Inital Proposed Gantt Chart](./assets/img/ganttchart.png)
+[![Inital Proposed Gantt Chart](./assets/img/ganttchart.png)](./assets/img/ganttchart.png)
 
 ### Contribution Table
+
 | Name            | Proposal Contributions        |
 |-----------------|-------------------------------|
 | Devon O'Quinn   | Gantt Chart, Literature Review |
