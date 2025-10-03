@@ -58,8 +58,8 @@ We expect the strategy to trade only a small number of overextensions, with a su
 
 ## Team Logistics
 
-### Gantt Chart
-[![Inital Proposed Gantt Chart](./assets/img/ganttchart.png)](./assets/img/ganttchart.png)
+### Gantt Chart (Click to enlarge)
+<a href="./assets/img/ganttchart.png" target="_blank"><img src="./assets/img/ganttchart.png" alt="Inital Proposed Gantt Chart"></a>
 
 ### Contribution Table
 
@@ -72,16 +72,16 @@ We expect the strategy to trade only a small number of overextensions, with a su
 | Mutimu Njenga   | Formatting                    |
 
 ## References
-[1] B. Shannon, “Anchored VWAP,” Alphatrends. [Online]. Available: https://alphatrends.net/anchored-vwap/.
+[1] B. Shannon, "Anchored VWAP," *Alphatrends*. \[Online\]. Available: [https://alphatrends.net/anchored-vwap/](https://alphatrends.net/anchored-vwap/)
 
-[2] C. Thompson, “Understanding Bollinger Bands: A Key Technical Analysis Tool for Investors,” Investopedia, Sep. 3, 2025. [Online]. Available: https://www.investopedia.com/terms/b/bollingerbands.asp.
+[2] C. Thompson, "Understanding Bollinger Bands: A Key Technical Analysis Tool for Investors," *Investopedia*, Sep. 3, 2025. \[Online\]. Available: [https://www.investopedia.com/terms/b/bollingerbands.asp](https://www.investopedia.com/terms/b/bollingerbands.asp)
 
-[3] M. López de Prado, Advances in Financial Machine Learning. Wiley, 2018.
+[3] M. López de Prado, *Advances in Financial Machine Learning*. Wiley, 2018.
 
-[4] C. M. Bishop, Pattern Recognition and Machine Learning. New York, NY, USA: Springer, 2006, ch. 9 (Mixture Models & EM).
+[4] C. M. Bishop, *Pattern Recognition and Machine Learning*. New York, NY: Springer, 2006, ch. 9.
 
-[5] L. Breiman, “Random Forests,” Machine Learning, vol. 45, no. 1, pp. 5–32, 2001. doi:10.1023/A:1010933404324.
+[5] L. Breiman, "Random Forests," *Machine Learning*, vol. 45, no. 1, pp. 5–32, 2001. DOI: 10.1023/A:1010933404324
 
-[6] J. H. Friedman, “Greedy Function Approximation: A Gradient Boosting Machine,” Annals of Statistics, vol. 29, no. 5, pp. 1189–1232, 2001. doi:10.1214/aos/1013203451.
+[6] J. H. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine," *Annals of Statistics*, vol. 29, no. 5, pp. 1189–1232, 2001. DOI: 10.1214/aos/1013203451
 
-[7] N. Meinshausen, “Quantile Regression Forests,” Journal of Machine Learning Research, vol. 7, pp. 983–999, 2006.
+[7] N. Meinshausen, "Quantile Regression Forests," *Journal of Machine Learning Research*, vol. 7, pp. 983–999, 2006.
