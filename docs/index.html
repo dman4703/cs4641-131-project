@@ -18,7 +18,7 @@
         Devon O'Quinn, Shayali Patel, Nicholas Nitsche, Julien Perez, Mutimu Njenga
     </p>
 
-    <h2>Introduction</h2>
+    <h2><u>Introduction</u></h2>
     <p>Mean reversion trading is based on the principle that prices tend to revert toward their average after periods of overextension. To develop a consistent strategy, we leverage machine learning to extract predictive signals from market data and optimize performance for low-capital intraday trading.</p>
 
     <h3>Literature Review</h3>
@@ -36,7 +36,7 @@
     <h3>Dataset Description</h3>
     <p>Intraday U.S. equities from Georgia Tech's Bloomberg Terminal. We will collect data over 5 days.</p>
 
-    <h2>Problem Definition</h2>
+    <h2><u>Problem Definition</u></h2>
 
     <h3>Problem & Motivation</h3>
     <p>Low capital trading favors low‑turnover, high‑conviction trades. Traditional retail day trading strategies utilize naive heuristic rules that result in bad and inconsistent profit margins; additionally, they are riskier and less flexible. We aim to implement a successful and consistent mean‑reversion strategy through an ML Pipeline.</p>
@@ -44,7 +44,7 @@
     <h3>Objective</h3>
     <p>Given an overextension event where price is far from an AVWAP, determine whether the price will revert sufficiently within the next 15–30 minutes to yield a profitable mean‑reversion trade. If a profitable reversion is likely, determine where to set dynamic take‑profit and stop‑loss levels to maximize returns by predicting the distribution of return magnitudes and executing the trade accordingly.</p>
 
-    <h2>Methods</h2>
+    <h2><u>Methods</u></h2>
 
     <h3>Data Preprocessing</h3>
     <ol>
@@ -70,7 +70,7 @@
         <li><strong>Supervised exit model.</strong> Gradient‑boosted trees (trained on the events predicted to revert with high probability) to predict τ‑quantiles; we will use the 0.1 quantile as the stop loss condition and the 0.5 quantile as the target condition.</li>
     </ol>
 
-    <h2>Results & Discussion</h2>
+    <h2><u>>Results & Discussion</u></h2>
 
     <h3>Metrics</h3>
     <p>For the GMM, we will look at the log-likelihood of events and stability of flagged overextensions. We will report the mean and standard deviation of F1 scores, negative log‑loss from purged k‑fold cross‑validation, and the proportion of events the model chooses to trade for the classifier. For the exit model, we will evaluate the calibration of predicted quantiles and use out‑of‑sample profit‑and‑loss per trade and Sharpe ratio as final metrics. The CPCV procedure produces a distribution of Sharpe ratios, allowing us to compute confidence intervals and assess the stability of the strategy.</p>
@@ -84,7 +84,7 @@
     <h3>Expected Outcomes</h3>
     <p>We expect the strategy to trade only a small number of overextensions, with a success rate significantly above random. We also expect it to perform better than standard heuristic trading.</p>
 
-    <h2>Team Logistics</h2>
+    <h2><u>Team Logistics</u></h2>
 
     <h3>Gantt Chart (Click to enlarge)</h3>
     <a href="./assets/img/ganttchart.png" target="_blank"><img src="./assets/img/ganttchart.png" alt="Inital Proposed Gantt Chart"></a>
@@ -121,7 +121,7 @@
         </tbody>
     </table>
 
-    <h2>References</h2>
+    <h2><u>References</u></h2>
     <p>[1] B. Shannon, "Anchored VWAP," <em>Alphatrends</em>. [Online]. Available: <a href="https://alphatrends.net/anchored-vwap/">https://alphatrends.net/anchored-vwap/</a></p>
 
     <p>[2] C. Thompson, "Understanding Bollinger Bands: A Key Technical Analysis Tool for Investors," <em>Investopedia</em>, Sep. 3, 2025. [Online]. Available: <a href="https://www.investopedia.com/terms/b/bollingerbands.asp">https://www.investopedia.com/terms/b/bollingerbands.asp</a></p>
