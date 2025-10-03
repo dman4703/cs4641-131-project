@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Mean Reversion Trader"
+author: "Devon O'Quinn, Shayali Patel, Nicholas Nitsche, Julien Perez, Mutimu Njenga"
+---
+
 # Mean Reversion Trader
 Devon O'Quinn, Shayali Patel, Nicholas Nitsche, Julien Perez, Mutimu Njenga
 
