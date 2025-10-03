@@ -110,7 +110,7 @@
 
     <h3>Literature Review</h3>
     <p>
-        Key features for mean reversion include VWAP, volume weighted average price or "the price a 'naive' trader can expect to obtain," and 
+        Key features for mean reversion include VWAP, volume weighted average price, or "the price a 'naive' trader can expect to obtain," and 
         anchored VWAP (AVWAP), which tracks trend direction from a user‑set anchor point [1]. Bollinger Bands 
         provide secondary signals of overbought/oversold conditions through volatility envelopes [2]. The triple 
         barrier method labels trades realistically via profit‑taking, stop‑loss, and time limits [3], while 
@@ -120,16 +120,16 @@
     <p>
         Gaussian mixture models can be used to determine probabilistic overextension scores from joint features, 
         and adapt better to regime shifts than z‑scores [4]. Random Forests handle nonlinear, correlated data well [5]; 
-        paired with sequential bootstrap, there is less label‑overlap bias [3]. The propabilities output by this model
+        paired with sequential bootstrap, there is less label‑overlap bias [3]. The probabilities output by this model
         indicate position sizes and whether to trade/not trade. Gradient‑boosted trees adapted for quantile 
-        regression can be used for exit sizing bypredict conditional quantiles for dynamic stops and targets;
+        regression can be used for exit sizing by predicting conditional quantiles for dynamic stops and targets;
         they outperform classical methods in high‑dimensional settings [6][7].
     </p>
 
     <p>
         Lastly, model evaluation requires careful consideration. Traditional random test/train splits fail for 
         financial data because features and labels are serially correlated [3]. Purged k‑fold with embargo 
-        removes overlap between samples, and CPCV returns a distribution of out‑of‑sample metrics from purged 
+        removes overlap between samples, and combinatorial purged cross-validation (CPCV) returns a distribution of out‑of‑sample metrics from purged 
         k-fold, providing a more reliable measure of model performance [3].
     </p>
 
@@ -236,7 +236,7 @@
     <ol>
         <li><strong>Unsupervised overextension detector.</strong> GMM on event features. Events whose 
             log‑likelihood falls below a threshold are flagged as overextended candidates.</li>
-        <li><strong>Supervised opportunity classifier.</strong> Random Forest traind on the overextension 
+        <li><strong>Supervised opportunity classifier.</strong> Random Forest trained on the overextension 
             candidates; it outputs the probability of reversion.</li>
         <li><strong>Supervised exit model.</strong> Gradient‑boosted trees (trained on the events predicted 
             to revert with high probability) to predict τ‑quantiles; we will use the 0.1 quantile as the stop 
@@ -246,11 +246,11 @@
     <h2><u>Results & Discussion</u></h2>
 
     <h3>Metrics</h3>
-    <p>For the GMM, we will look at the log-likelihood of events and stability of flagged overextensions. We 
-        will report the mean and standard deviation of F1 scores, negative log‑loss from purged k‑fold 
-        cross‑validation, and the proportion of events the model chooses to trade for the classifier. For the 
-        exit model, we will evaluate the calibration of predicted quantiles and use out‑of‑sample 
-        profit‑and‑loss per trade and Sharpe ratio as final metrics. The CPCV procedure produces a 
+    <p>For the GMM, we will look at the log-likelihood of events and stability of flagged overextensions. For the 
+        classifier, we will report the mean and standard deviation of F1 scores, negative log‑loss from purged k‑fold 
+        cross‑validation, and the proportion of events the model chooses to trade. For the 
+        exit model, we will evaluate the calibration of predicted quantiles, use out‑of‑sample 
+        profit‑and‑loss per trade, and the Sharpe ratio as metrics. The CPCV procedure produces a 
         distribution of Sharpe ratios, allowing us to compute confidence intervals and assess the stability 
         of the strategy.</p>
 
@@ -262,7 +262,7 @@
 
     <h3>Expected Outcomes</h3>
     <p>We expect the strategy to trade only a small number of overextensions, with a success rate 
-        significantly above random. We also expect it to perform better than standard heuristic trading.</p>
+        above random. We also expect it to perform better than naive heuristic trading.</p>
 
     <h2><u>Team Logistics</u></h2>
 
@@ -296,7 +296,7 @@
             </tr>
             <tr>
                 <td>Mutimu Njenga</td>
-                <td>Formatting</td>
+                <td>-</td>
             </tr>
         </tbody>
     </table>
