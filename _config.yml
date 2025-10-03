@@ -1,0 +1,16 @@
+remote_theme: ryanmcdermott/jekyll-latex
+
+title: "Mean Reversion Trader"
+author: "Devon O'Quinn, Shayali Patel, Nicholas Nitsche, Julien Perez, Mutimu Njenga"
+
+# Enable math rendering
+markdown: kramdown
+kramdown:
+  math_engine: katex
+  input: GFM
+  syntax_highlighter: rouge
+
+# Plugins
+plugins:
+  - jekyll-remote-theme
+
