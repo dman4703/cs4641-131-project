@@ -148,27 +148,32 @@
     <div class="slideshow-container">
         <div class="slide active">
             <img src="./assets/img/AAPL_BQ.gif" alt="AAPL Bloomberg Quote">
-            <div class="slide-caption">AAPL - Bloomberg Quote</div>
+            <div class="slide-caption">Bloomberg snapshot (AAPL): intraday performance, historical chart, 
+                earnings, valuation ratios, and trade recap.</div>
         </div>
         <div class="slide">
             <img src="./assets/img/AAPL_VWAP.gif" alt="AAPL VWAP">
-            <div class="slide-caption">AAPL - VWAP Analysis</div>
+            <div class="slide-caption">VWAP dashboard (AAPL): intraday volume distribution by exchange with 
+                price-aligned histogram and VWAP curve overlay.</div>
         </div>
         <div class="slide">
             <img src="./assets/img/AAPL_HP.gif" alt="AAPL Historic Price Table">
-            <div class="slide-caption">AAPL - Historic Price Table</div>
+            <div class="slide-caption">Historic Price Table (APPL)</div>
         </div>
         <div class="slide">
             <img src="./assets/img/AAPL_QR.gif" alt="AAPL Quote Recap">
-            <div class="slide-caption">AAPL - Quote Recap</div>
+            <div class="slide-caption">Trade/quote recap (AAPL): intraday 
+                tick-by-tick trade sizes, prices, and conditions showing high-frequency execution details.</div>
         </div>
         <div class="slide">
             <img src="./assets/img/AAPL_GIP.gif" alt="AAPL GIP">
-            <div class="slide-caption">AAPL - Intraday Price Graph</div>
+            <div class="slide-caption">Intraday price chart (AAPL): October 2, 2025 trading session showing 
+                volatility, high/low points, and average price levels.</div>
         </div>
         <div class="slide">
             <img src="./assets/img/AAPL_IGPO.gif" alt="AAPL IGPO">
-            <div class="slide-caption">AAPL - Intraday Bar Graph</div>
+            <div class="slide-caption">Tntraday bar chart (AAPL): multi-day price action with moving averages 
+                (5, 10, 15) and volume profile for trend analysis.</div>
         </div>
 
         <button class="slideshow-nav prev" onclick="changeSlide(-1)">&#10094;</button>
@@ -184,7 +189,7 @@
         </div>
     </div>
 
- Q    <h2><u>Problem Definition</u></h2>
+    <h2><u>Problem Definition</u></h2>
 
     <h3>Problem & Motivation</h3>
     <p>
@@ -261,7 +266,7 @@
 
     <h2><u>Team Logistics</u></h2>
 
-    <h3>Gantt Chart (Click to enlarge)</h3>
+    <h3>Gantt Chart</h3>
     <a href="./assets/img/ganttchart.png" target="_blank"><img src="./assets/img/ganttchart.png" alt="Inital Proposed Gantt Chart"></a>
 
     <h3>Contribution Table</h3>
@@ -275,11 +280,11 @@
         <tbody>
             <tr>
                 <td>Devon O'Quinn</td>
-                <td>Literature Review, Proposal Presentation</td>
+                <td>Literature Review, Dataset Description, <br>Proposal Presentation</td>
             </tr>
             <tr>
                 <td>Shayali Patel</td>
-                <td>Gantt Chart, Objective</td>
+                <td>Gantt Chart, Problem Description</td>
             </tr>
             <tr>
                 <td>Nicholas Nitsche</td>
@@ -317,15 +322,9 @@
         function changeSlide(direction) {
             const slides = document.querySelectorAll('.slide');
             const dots = document.querySelectorAll('.dot');
-            
-            // Remove active class from current slide and dot
             slides[currentSlideIndex].classList.remove('active');
             dots[currentSlideIndex].classList.remove('active');
-            
-            // Update index
             currentSlideIndex = (currentSlideIndex + direction + slides.length) % slides.length;
-            
-            // Add active class to new slide and dot
             slides[currentSlideIndex].classList.add('active');
             dots[currentSlideIndex].classList.add('active');
         }
@@ -333,24 +332,12 @@
         function currentSlide(index) {
             const slides = document.querySelectorAll('.slide');
             const dots = document.querySelectorAll('.dot');
-            
-            // Remove active class from current slide and dot
             slides[currentSlideIndex].classList.remove('active');
             dots[currentSlideIndex].classList.remove('active');
-            
-            // Update index
             currentSlideIndex = index;
-            
-            // Add active class to new slide and dot
             slides[currentSlideIndex].classList.add('active');
             dots[currentSlideIndex].classList.add('active');
         }
-
-        // Optional: Auto-advance slides every 5 seconds
-        // Uncomment the lines below if you want automatic slideshow
-        // setInterval(() => {
-        //     changeSlide(1);
-        // }, 5000);
     </script>
 </body>
 </html>
