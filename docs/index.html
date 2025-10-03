@@ -31,43 +31,20 @@
 
     <h3>Literature Review</h3>
     <p>
-        There are two notable features to consider for mean reversion trading. VWAP is "the price a 'naive' 
-        trader can expect to obtain"; buyers should fill below it and sellers above it [1]. The anchored 
-        VWAP (AVWAP) is essentially the same, but starts computing VWAP at a user‑set time. Because AVWAP 
-        starts computing from a chosen anchor and can measure over any time interval, if the price stays above 
-        a rising AVWAP, there is a bullish trend; if the price falls below a declining AVWAP, there is a 
-        bearish trend [1]. Bollinger Bands summarize trend and volatility; prices near the upper/lower band 
-        indicate overbought/oversold conditions. They serve as a useful secondary indicator since they are not 
-        predictive [2]. Using features such as these, ML can be used to implement a statistically sound and 
-        consistent trading strategy.
+        Key features for mean reversion include VWAP, "the price a 'naive' trader can expect to obtain," and 
+        anchored VWAP (AVWAP), which tracks trend direction from a user‑set anchor point [1]. Bollinger Bands 
+        provide secondary signals of overbought/oversold conditions through volatility envelopes [2]. The triple 
+        barrier method labels trades realistically via profit‑taking, stop‑loss, and time limits [3], while 
+        event‑based sampling reduces time‑bar heteroskedasticity [3].
     </p>
 
     <p>
-        Labels are essential. The triple barrier method gives realistic labels: each event has a profit‑taking 
-        level, a stop‑loss level, and a vertical barrier representing a maximum holding period; the event's 
-        label depends on which barrier is hit first [3]. Event‑based sampling (CUSUM) and activity‑based bars 
-        regularize information flow and reduce time‑bar heteroskedasticity [3].
-    </p>
-
-    <p>
-        Gaussian mixture models assign probabilities under a mixture of Gaussians, and can be applied here 
-        to yield a soft "overextension score" from joint features (VWAP distance, Bollinger position, 
-        short‑term momentum, relative volume) [4]. GMMs adapt to regime shifts and heavy tails better than 
-        simple z‑scores.
-    </p>
-
-    <p>
-        Random Forests average many decision tree classifiers, lowering variance, and are well-suited 
-        to nonlinear, correlated data [5]. However, naive bootstrap aggregating can overstate performance when 
-        labels overlap; using sequential bootstrap and limiting the number of samples to the average uniqueness 
-        of labels is a better method [3]. Probabilities map to position sizes and whether to trade or not to 
-        trade.</p>
-
-    <p>
-        Gradient‑boosted trees build predictors by correcting residuals and can be adapted to quantile 
-        regression, a useful tool for exit sizing [6]. Estimating conditional quantiles (e.g., 10th/50th/90th) 
-        allows for dynamic stops and targets; additionally, tree-based quantile methods outperform classical 
-        quantile methods in high-dimensional, nonlinear settings. [7].
+        Gaussian mixture models can be used to determine probabilistic overextension scores from joint features, 
+        and adapt better to regime shifts than z‑scores [4]. Random Forests handle nonlinear, correlated data well [5]; 
+        paired with sequential bootstrap, there is less label‑overlap bias [3]. The propabilities output by this model
+        indicate position sizes and whether to trade/not trade. Gradient‑boosted trees adapted for quantile 
+        regression can be used for exit sizing bypredict conditional quantiles for dynamic stops and targets;
+        they outperform classical methods in high‑dimensional settings [6][7].
     </p>
 
     <p>
@@ -156,7 +133,7 @@
 
     <h3>Project Goals</h3>
     <ul>
-        <li>Build an intraday ML pipeline across multiple assets.</li>
+        <li>Build an intraday ML pipeline across multiple different asset types.</li>
         <li>Outperform naive heuristic trading.</li>
     </ul>
 
