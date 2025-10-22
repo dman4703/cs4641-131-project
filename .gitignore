@@ -214,3 +214,6 @@ desktop.ini
 .jekyll-cache/
 .sass-cache/
 _site/
+
+# --- large excel files ---
+/data/excel/
