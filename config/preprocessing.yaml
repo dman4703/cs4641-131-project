@@ -1,0 +1,57 @@
+# Data Cleaning Configuration
+# Policy parameters for tick data preprocessing
+
+# Forward-fill cap for NBBO quotes (seconds)
+# Quotes older than this will not be forward-filled
+ffill_cap_seconds: 2
+
+# Timezone handling
+input_timezone: "America/New_York"
+storage_timezone: "UTC"
+
+# Duplicate detection key
+# Fields used to identify duplicate rows
+duplicate_key:
+  - ts
+  - type
+  - price
+  - size
+  - exch
+  - cond_norm
+
+# Exchange policy
+# keep_all: true means use consolidated tape from all exchanges
+keep_all_exchanges: true
+excluded_exchanges: []  # Empty list = keep all
+
+# Locked/Crossed market policy
+# When nbo < nbb, drop the quote and carry last valid NBBO
+# If gap exceeds ffill_cap, mark as invalid
+handle_crossed_markets: "carry_last_valid"
+
+# Quality gates (warnings/failures)
+quality_gates:
+  min_nbbo_coverage_pct: 99.0
+  max_crossed_quotes_pct: 0.5
+  fail_on_unknown_codes: false  # Warn but don't fail
+
+# Microstructure flags
+compute_microstructure_flags: true
+at_bid_ask_tolerance: 0.0001  # Price tolerance for at_bid/at_ask flags
+
+# Output settings
+output:
+  compression: "zstd"
+  float_dtype: "float32"
+  int_dtype: "int32"
+  use_categorical: true
+
+# Parallel processing
+parallel:
+  max_workers: -1  # -1 = (cpu_count - 1)
+  
+# Logging
+logging:
+  level: "INFO"
+  log_file: "data/clean/cleaning.log"
+

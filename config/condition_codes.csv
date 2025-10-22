@@ -1,0 +1,28 @@
+code,bucket,description,source
+"",NEUTRAL,Regular sale (blank),SIP CTA/UTP
+0,NEUTRAL,Regular sale,SIP CTA/UTP
+F,SOFT_INCLUDE,ISO - Intermarket Sweep Order,SIP CTA/UTP
+IS,SOFT_INCLUDE,ISO - Intermarket Sweep Order (alternate),SIP CTA/UTP
+T,HARD_EXCLUDE,Form-T (reported late),SIP CTA/UTP
+U,HARD_EXCLUDE,Extended-hours trade,SIP CTA/UTP
+Z,HARD_EXCLUDE,Out-of-sequence,SIP CTA/UTP
+N,HARD_EXCLUDE,Next-day settlement,SIP CTA/UTP
+R6,HARD_EXCLUDE,Auction/reopening related,Bloomberg
+R,HARD_EXCLUDE,Seller's option,SIP CTA/UTP
+O,HARD_EXCLUDE,Official opening print,SIP CTA/UTP
+Q,HARD_EXCLUDE,Opening price (market-center open),SIP CTA/UTP
+M,HARD_EXCLUDE,Market-center official close,SIP CTA/UTP
+6,HARD_EXCLUDE,Closing print,SIP CTA/UTP
+5,HARD_EXCLUDE,Re-opening print,SIP CTA/UTP
+L,HARD_EXCLUDE,Sold last (late report),SIP CTA/UTP
+I,HARD_EXCLUDE,Odd lot trade,SIP CTA/UTP
+4,HARD_EXCLUDE,Derivatively priced,SIP CTA/UTP
+W,HARD_EXCLUDE,Average-price trade,SIP CTA/UTP
+B,HARD_EXCLUDE,Bunched trade,SIP CTA/UTP
+H,HARD_EXCLUDE,Price-variation trade,SIP CTA/UTP
+X,HARD_EXCLUDE,Cross trade,SIP CTA/UTP
+S,HARD_EXCLUDE,Split trade,SIP CTA/UTP
+P,HARD_EXCLUDE,Prior-reference price,SIP CTA/UTP
+7,HARD_EXCLUDE,Exempt Qualified Contingent Trade (QCT),SIP CTA/UTP
+CT,HARD_EXCLUDE,Contingent Trade,SIP CTA/UTP
+

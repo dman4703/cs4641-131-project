@@ -217,3 +217,12 @@ _site/
 
 # --- large excel files ---
 /data/excel/
+
+# # --- Cleaned data (parquet files are large, but keep metadata) ---
+# /data/clean/**/*.parquet
+# !/data/clean/metadata.parquet
+# !/data/clean/metadata.csv
+# /data/clean/**/*.log
+
+# # --- Bar data (will be generated later) ---
+# /data/bars/
