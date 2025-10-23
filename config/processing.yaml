@@ -1,0 +1,56 @@
+volume_bars:
+  target_bars_per_day: 600
+  thresholds:
+    CCL: 4600
+    CNC: 2200
+    DAL: 2000
+    DECK: 2000
+    DLTR: 2000
+    DXCM: 2000
+    DOW: 2000
+    EQT: 2000
+    FCX: 4600
+    KVUE: 7500
+    INTC: 20500
+    MCHP: 2000
+    NCLH: 2300
+    'ON': 2000
+    PCG: 8700
+    SLB: 2200
+    SMCI: 6800
+    TTD: 2400
+    UBER: 2000
+    XYZ: 2000
+  min_threshold: 2000
+  max_threshold: 100000
+triple_barrier:
+  k: 1.0
+  k_grid:
+  - 0.75
+  - 1.0
+  - 1.25
+  ewm_halflife: 50
+  time_barrier_minutes: 20
+features:
+  vwap_zscore_window: 20
+  bollinger_window: 20
+  bollinger_std: 2.0
+  momentum_windows:
+  - 3
+  - 5
+  relative_volume_window: 20
+  context_window_minutes: 5
+session:
+  market_open: 09:35
+  market_close: '15:35'
+  timezone: America/New_York
+cv:
+  n_folds: 5
+  strategy: LODO
+  embargo_minutes: 20
+  purge_method: interval_overlap
+output:
+  compression: zstd
+  float_dtype: float32
+  int_dtype: int32
+config_hash: cfa7ade774a88fd3bac9fb4552b92c55
