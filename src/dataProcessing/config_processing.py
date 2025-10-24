@@ -1,6 +1,6 @@
 """
 Configuration Management for Data Processing Pipeline
-Computes ticker-specific volume thresholds and locks configuration parameters.
+Computes ticker-specific volume thresholds and saves configuration parameters.
 """
 
 import hashlib

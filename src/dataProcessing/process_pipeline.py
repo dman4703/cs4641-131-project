@@ -1,6 +1,6 @@
 """
-Data Processing Pipeline Orchestration
-Runs the complete pipeline: volume bars → features → labels → CV → persistence
+Data Processing Pipeline
+volume bars → features → labels → CV → save
 """
 
 import json

@@ -1,6 +1,6 @@
 """
 Purged K-Fold Cross-Validation with Embargo
-Implements day-level LODO (Leave-One-Day-Out) with purging and embargo.
+Implements LODO (Leave-One-Day-Out).
 """
 
 import logging
@@ -21,7 +21,7 @@ def create_cv_splits(
     """
     Create purged k-fold CV splits at the day level.
     
-    Uses Leave-One-Day-Out (LODO) strategy:
+    Uses LODO strategy:
     - Each fold validates on 1 day, trains on the other 4 days
     - Purge: Remove training samples where [t, t_end] overlaps validation period
     - Embargo: Remove training samples within embargo_minutes after validation period

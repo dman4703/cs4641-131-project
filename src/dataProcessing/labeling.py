@@ -1,6 +1,6 @@
 """
 Triple Barrier Labeling
-Implements volatility-scaled triple barrier method from scratch.
+Implements triple barrier labeling.
 
 Labels:
   +1: Upper barrier hit first (profit target)
