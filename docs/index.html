@@ -134,6 +134,7 @@
     </p>
 
     <h3>Dataset Description</h3>
+    <!-- TODO: update/revise as necessary. should list the 20 stocks that were selected.   -->
     <p>
         Quantitative, structured intraday time-series for 10–20 liquid U.S. equities (stock selection detailed 
         in Data Preprocessing), collected over 5 trading days during regular hours (excluding the first/last 
@@ -145,49 +146,8 @@
         prints, and standardize per asset/session.
     </p>
 
-    <div class="slideshow-container">
-        <div class="slide active">
-            <img src="./assets/img/AAPL_BQ.gif" alt="AAPL Bloomberg Quote">
-            <div class="slide-caption">Bloomberg Quote (AAPL): intraday performance, historical chart, 
-                earnings, valuation ratios, and trade recap.</div>
-        </div>
-        <div class="slide">
-            <img src="./assets/img/AAPL_VWAP.gif" alt="AAPL VWAP">
-            <div class="slide-caption">VWAP dashboard (AAPL): intraday volume distribution by exchange with 
-                price-aligned histogram and VWAP curve overlay.</div>
-        </div>
-        <div class="slide">
-            <img src="./assets/img/AAPL_HP.gif" alt="AAPL Historic Price Table">
-            <div class="slide-caption">Historic Price Table (APPL)</div>
-        </div>
-        <div class="slide">
-            <img src="./assets/img/AAPL_QR.gif" alt="AAPL Quote Recap">
-            <div class="slide-caption">Trade/quote recap (AAPL): intraday 
-                tick-by-tick trade sizes, prices, and conditions showing high-frequency execution details.</div>
-        </div>
-        <div class="slide">
-            <img src="./assets/img/AAPL_GIP.gif" alt="AAPL GIP">
-            <div class="slide-caption">Intraday price chart (AAPL): October 2, 2025 trading session showing 
-                volatility, high/low points, and average price levels.</div>
-        </div>
-        <div class="slide">
-            <img src="./assets/img/AAPL_IGPO.gif" alt="AAPL IGPO">
-            <div class="slide-caption">Tntraday bar chart (AAPL): multi-day price action with moving averages 
-                (5, 10, 15) and volume profile for trend analysis.</div>
-        </div>
-
-        <button class="slideshow-nav prev" onclick="changeSlide(-1)">&#10094;</button>
-        <button class="slideshow-nav next" onclick="changeSlide(1)">&#10095;</button>
-
-        <div class="dots-container">
-            <span class="dot active" onclick="currentSlide(0)"></span>
-            <span class="dot" onclick="currentSlide(1)"></span>
-            <span class="dot" onclick="currentSlide(2)"></span>
-            <span class="dot" onclick="currentSlide(3)"></span>
-            <span class="dot" onclick="currentSlide(4)"></span>
-            <span class="dot" onclick="currentSlide(5)"></span>
-        </div>
-    </div>
+    <!-- add tables or images of snippets from the datasets - maybe use slideshow container. -->
+     <p>TODO: add visuals of data.</p>
 
     <h2><u>Problem Definition</u></h2>
 
@@ -212,6 +172,9 @@
     <h2><u>Methods</u></h2>
 
     <h3>Data Preprocessing</h3>
+    <!-- TODO: update/elaborate on the data preprocessing steps. needs to present and document 
+     stock selection, data cleaning, bar construction, labeling, feature engineering, etc. include visuals. -->
+    <p>TODO: update/elaborate on the data preprocessing steps.</p>
     <ol>
         <li><strong>Stock selection.</strong> For our universe, we will assume a trading capital of $2,500. 
             Stocks will be selected based on the following criteria:
@@ -233,37 +196,34 @@
     </ol>
 
     <h3>Models</h3>
-    <ol>
-        <li><strong>Unsupervised overextension detector.</strong> GMM on event features. Events whose 
-            log‑likelihood falls below a threshold are flagged as overextended candidates.</li>
-        <li><strong>Supervised opportunity classifier.</strong> Random Forest trained on the overextension 
-            candidates; it outputs the probability of reversion.</li>
-        <li><strong>Supervised exit model.</strong> Gradient‑boosted trees (trained on the events predicted 
-            to revert with high probability) to predict τ‑quantiles; we will use the 0.1 quantile as the stop 
-            loss condition and the 0.5 quantile as the target condition.</li>
-    </ol>
+
+    <h4>GMM: Unsupervised Overextension Detector</h4>
+    <!-- TODO:  present/elaborate on the GMM model. discuss why we selected GMM. don't discuss results/evaluation here. 
+     Do discuss the implementation details. hyperparameters, etc. can include relevant visuals. -->
+    <p>TODO: present/elaborate on the GMM model.</p>
+    <p>GMM on event features. Events whose log‑likelihood falls below a threshold are flagged as overextended candidates.</p>
+
+    <h4>Supervised Opportunity Classifier</h4>
+    <p>Random Forest trained on the overextension candidates; it outputs the probability of reversion.</p>
+
+    <h4>Supervised Exit Model</h4>
+    <p>Gradient‑boosted trees (trained on the events predicted to revert with high probability) to predict τ‑quantiles; we will use 
+        the 0.1 quantile as the stop loss condition and the 0.5 quantile as the target condition.</p>
 
     <h2><u>Results & Discussion</u></h2>
 
-    <h3>Metrics</h3>
-    <p>For the GMM, we will look at the log-likelihood of events and stability of flagged overextensions. For the 
-        classifier, we will report the mean and standard deviation of F1 scores, negative log‑loss from purged k‑fold 
-        cross‑validation, and the proportion of events the model chooses to trade. For the 
-        exit model, we will evaluate the calibration of predicted quantiles, use out‑of‑sample 
-        profit‑and‑loss per trade, and the Sharpe ratio as metrics. The CPCV procedure produces a 
-        distribution of Sharpe ratios, allowing us to compute confidence intervals and assess the stability 
-        of the strategy.</p>
+    <h3>GMM: Unsupervised Overextension Detector</h3>
+    <!-- TODO: Discuss GMM results/evaluation. present visualizations and quantitative scoring metrics. discuss what the 
+     visualization/metric tell us. why did the model perform well/poorly? what are the next steps? basically analyze the
+     GMM model. -->
+    <p>TODO: discuss GMM results/evaluation.</p>
 
-    <h3>Project Goals</h3>
-    <ul>
-        <li>Build an intraday ML pipeline across multiple different asset types.</li>
-        <li>Outperform naive heuristic trading.</li>
-    </ul>
+    <h3>Supervised Opportunity Classifier</h3>
+    <p>TBD</p>
 
-    <h3>Expected Outcomes</h3>
-    <p>We expect the strategy to trade only a small number of overextensions, with a success rate 
-        above random. We also expect it to perform better than naive heuristic trading.</p>
-
+    <h3>Supervised Exit Model</h3>
+    <p>TBD</p>
+    
     <h2><u>Team Logistics</u></h2>
 
     <h3>Gantt Chart</h3>
