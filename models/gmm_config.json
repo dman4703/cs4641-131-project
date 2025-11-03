@@ -1,0 +1,55 @@
+{
+  "best_params": {
+    "n_components": 8,
+    "covariance_type": "full"
+  },
+  "train_days": [
+    "2025-10-02",
+    "2025-10-03",
+    "2025-10-06",
+    "2025-10-07"
+  ],
+  "test_day": "2025-10-08",
+  "threshold": -14.434934148412143,
+  "threshold_quantile": 0.05,
+  "feature_names": [
+    "feat_vwap_zscore",
+    "feat_bollinger_position",
+    "feat_momentum_3bar",
+    "feat_momentum_5bar",
+    "feat_relative_volume",
+    "feat_time_of_day",
+    "feat_context_bar_count",
+    "feat_context_avg_volume",
+    "feat_context_price_range"
+  ],
+  "metrics": {
+    "train_mean_loglik": -7.1288217311766315,
+    "test_mean_loglik": -7.021885873583113,
+    "train_candidate_rate": 0.05000926097425449,
+    "test_candidate_rate": 0.05209063302966597,
+    "n_train": 37793,
+    "n_test": 8562,
+    "n_components": 8,
+    "train_label_dist_flagged": {
+      "1": 976,
+      "-1": 886,
+      "0": 28
+    },
+    "train_label_dist_unflagged": {
+      "1": 18086,
+      "-1": 17442,
+      "0": 375
+    },
+    "test_label_dist_flagged": {
+      "1": 221,
+      "-1": 211,
+      "0": 14
+    },
+    "test_label_dist_unflagged": {
+      "1": 4217,
+      "-1": 3814,
+      "0": 85
+    }
+  }
+}
