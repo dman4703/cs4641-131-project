@@ -95,10 +95,32 @@
         .dot.active {
             background-color: #333;
         }
+
+        /* Table and Image Styling */
+        table {
+            margin: 20px auto;
+            display: table;
+        }
+
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .img-caption {
+            text-align: center;
+            font-size: 0.9em;
+            color: #555;
+            font-style: italic;
+            margin: -10px auto 20px auto;
+            max-width: 800px;
+        }
     </style>
 </head>
 <body>
-    <h1>Mean Reversion Trader</h1>
+    <h1>Mean Reversion Trading with Machine Learning</h1>
     <p class="author">
         Devon O'Quinn, Shayali Patel, Nicholas Nitsche, Julien Perez, Mutimu Njenga
     </p>
@@ -137,9 +159,9 @@
     <p>
         The raw dataset is composed of high‑frequency tick data for 20 liquid U.S. equities, selected from the S&amp;P&nbsp;500 
         using price, liquidity and volatility screens. Data were collected over five trading days (October 2, 3, 6, 7 
-        and 8 of 2025) during regular trading hours, excluding the opening and closing five minutes. Each day’s file 
+        and 8 of 2025) during regular trading hours, excluding the opening and closing five minutes. Each day's file 
         contains millisecond‑timestamped trade prints and quote updates recorded from the Bloomberg Terminal. 
-        In total the raw universe spans approximately 21 million tick records; after cleaning and consolidation 
+        In total the raw universe spans approximately 21.4 million tick records; after cleaning and consolidation 
         (deduplication, NBBO construction and condition‑code filtering) we retain about 1.13 million valid trades 
         across all stocks and days.
     </p>
@@ -150,6 +172,7 @@
         Range percentage.
     </p>
     <table>
+        <caption><strong>Selected Stocks</strong></caption>
         <thead>
             <tr>
                 <th>Ticker</th><th>Company</th><th>Sector</th><th>LastClose ($)</th><th>ADV60d ($)</th><th>ATR% (20‑day median)</th>
@@ -180,8 +203,55 @@
     </table>
     <p>
         After processing, we construct around 600 volume bars per trading day for each ticker, yielding about 46,855 bars with nine 
-        derived features and triple‑barrier labels. TODO: include table of processed data schema.
+        derived features and triple‑barrier labels. The cleaning pipeline achieved an average NBBO coverage of 99.99%, 
+        zero negative spreads, and an average duplicate removal rate of 33.07%. The final cleaned dataset contains 1,130,327 trades across all 
+        tickers and days.
     </p>
+    <table>
+        <caption><strong>Cleaned Data Schema</strong></caption>
+        <thead>
+            <tr>
+                <th>Column</th><th>Type</th><th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>ts</td><td>datetime64[ns, UTC]</td><td>Trade timestamp in UTC</td></tr>
+            <tr><td>ticker</td><td>object</td><td>Stock ticker symbol</td></tr>
+            <tr><td>type</td><td>category</td><td>Event type (TRADE)</td></tr>
+            <tr><td>price</td><td>float32</td><td>Trade execution price</td></tr>
+            <tr><td>size</td><td>int32</td><td>Trade size in shares</td></tr>
+            <tr><td>cond</td><td>object</td><td>Raw trade condition codes</td></tr>
+            <tr><td>cond_norm</td><td>object</td><td>Normalized condition codes</td></tr>
+            <tr><td>exch</td><td>category</td><td>Exchange identifier</td></tr>
+            <tr><td>nbb</td><td>float32</td><td>National best bid price</td></tr>
+            <tr><td>nbo</td><td>float32</td><td>National best offer price</td></tr>
+            <tr><td>nbb_size</td><td>int32</td><td>National best bid size</td></tr>
+            <tr><td>nbo_size</td><td>int32</td><td>National best offer size</td></tr>
+            <tr><td>mid</td><td>float32</td><td>Mid-price: 0.5 × (nbb + nbo)</td></tr>
+            <tr><td>spread</td><td>float32</td><td>Bid-ask spread: nbo − nbb</td></tr>
+            <tr><td>at_bid</td><td>int64</td><td>Flag: trade at bid (1) or not (0)</td></tr>
+            <tr><td>at_ask</td><td>int64</td><td>Flag: trade at ask (1) or not (0)</td></tr>
+        </tbody>
+    </table>
+    <table>
+        <caption><strong>Data Cleaning Quality Metrics</strong></caption>
+        <thead>
+            <tr>
+                <th>Metric</th><th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Raw tick records</td><td>21,419,919</td></tr>
+            <tr><td>Final cleaned trades</td><td>1,130,327</td></tr>
+            <tr><td>Retention rate</td><td>5.3%</td></tr>
+            <tr><td>Avg duplicate removal</td><td>33.07%</td></tr>
+            <tr><td>Avg NBBO coverage</td><td>99.99%</td></tr>
+            <tr><td>Avg crossed quotes</td><td>0.52%</td></tr>
+            <tr><td>Trades dropped (condition codes)</td><td>2,005,302</td></tr>
+            <tr><td>Trades dropped (no NBBO)</td><td>140</td></tr>
+            <tr><td>Avg processing time per file</td><td>22.48s</td></tr>
+        </tbody>
+    </table>
 
 
     <h2><u>Problem Definition</u></h2>
@@ -222,27 +292,66 @@
         raw rows and NBBO crossed quotes occurred in less than 1% of cases.
     </p>
     <p>
-        <b>Bar Type</b>.To determine whether to use volume or dollar bars, we performed EDA on three representative tickers. By examining per‑second 
+        <b>Bar Type</b>. To determine whether to use volume or dollar bars, we performed EDA on three representative tickers. By examining per‑second 
         flow statistics (coefficient of variation, Fano factor, intraday profiles and zero‑activity periods) we found that 
         dollar‑denominated flows were slightly more bursty and less uniform than share‑based flows. Prototype bars built on dollar 
         thresholds also exhibited more variable inter‑bar durations and less white noise in returns. Consequently we adopted volume 
-        bars with ticker‑specific thresholds calibrated as median daily volume divided by 600 (clamped between 2k and 100k shares). 
+        bars with ticker‑specific thresholds calibrated as median daily volume divided by 600 (clamped between 2,000 and 100,000 shares). 
         This yields approximately 600 bars per day per ticker; each bar captures the OHLC, VWAP, trade count, duration and volume.
     </p>
-    <img src="./assets/img/determineBar_8_1.png" alt="Three bar charts compare Volume vs Dollar across INTC, SMCI, FCX on 10-2-25 and 
-    10-3-25. Left: CV similar. Middle: Dollar shows dramatically higher Fano Factor (more bursty). Right: Zero-activity rates are 
-    close; FCX highest (~75–78%), INTC lowest (~55–60%).">
+    <table>
+        <caption><strong>Volume Bar Configuration (Selected Tickers)</strong></caption>
+        <thead>
+            <tr>
+                <th>Ticker</th><th>Volume Threshold (shares/bar)</th><th>Target Bars/Day</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>INTC</td><td>20,500</td><td>~600</td></tr>
+            <tr><td>PCG</td><td>8,700</td><td>~600</td></tr>
+            <tr><td>KVUE</td><td>7,500</td><td>~600</td></tr>
+            <tr><td>SMCI</td><td>6,800</td><td>~600</td></tr>
+            <tr><td>CCL</td><td>4,600</td><td>~600</td></tr>
+            <tr><td>FCX</td><td>4,600</td><td>~600</td></tr>
+            <tr><td>TTD</td><td>2,400</td><td>~600</td></tr>
+            <tr><td>NCLH</td><td>2,300</td><td>~600</td></tr>
+            <tr><td>CNC</td><td>2,200</td><td>~600</td></tr>
+            <tr><td>SLB</td><td>2,200</td><td>~600</td></tr>
+            <tr><td>DAL</td><td>2,000</td><td>~600</td></tr>
+            <tr><td>Others</td><td>2,000</td><td>~600</td></tr>
+        </tbody>
+    </table>
+    <img src="./assets/img/determineBar_8_1.png" alt="Volume vs Dollar bar comparison">
+    <p class="img-caption">Figure 1: Comparison of volume vs. dollar bar metrics.</p>
     <p>
         <b>Feature Engineering</b>. From each volume bar we engineered nine features while avoiding look‑ahead bias. These features include a standardized 
         distance to VWAP, Bollinger‑band position (20‑bar window, 2&nbsp;σ), three‑ and five‑bar 
         momentum, relative volume compared to a rolling median, normalized time of day, and three context variables summarizing 
         the past five minutes (bar count, average volume and price range). All rolling statistics are shifted by one bar to ensure 
-        the features do not incorporate the current bar’s outcome. The feature distributions are approximately symmetric with 
+        the features do not incorporate the current bar's outcome. The feature distributions are approximately symmetric with 
         moderate tails.
     </p>
-    <img src="./assets/img/dataEDA_10_0.png" alt="Grid of nine histograms summarizing features: VWAP z-score and Momentum (3/5 bar) 
-    roughly normal around zero; Bollinger position centered near zero; Relative volume clustered near 1 with right-tail outliers; 
-    time-of-day roughly uniform; context bar count, average volume, and price range strongly right-skewed.">
+    <table>
+        <caption><strong>Engineered Features</strong></caption>
+        <thead>
+            <tr>
+                <th>Feature</th><th>Description</th><th>Formula / Method</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>VWAP z-score</td><td>Standardized distance from VWAP</td><td>(close − VWAP) / rolling_std(20).shift(1)</td></tr>
+            <tr><td>Bollinger position</td><td>Position within Bollinger Bands</td><td>(close − BB_mid) / (BB_upper − BB_mid), 20-bar window, 2σ</td></tr>
+            <tr><td>Momentum (3-bar)</td><td>Log return over 3 bars</td><td>log(close / close.shift(3))</td></tr>
+            <tr><td>Momentum (5-bar)</td><td>Log return over 5 bars</td><td>log(close / close.shift(5))</td></tr>
+            <tr><td>Relative volume</td><td>Volume vs. rolling median</td><td>volume / rolling_median(20).shift(1)</td></tr>
+            <tr><td>Time of day</td><td>Normalized time (0=open, 1=close)</td><td>(t − market_open) / market_duration</td></tr>
+            <tr><td>Context: bar count</td><td>Number of bars in past 5 minutes</td><td>count(bars where t ≥ current_t − 5min)</td></tr>
+            <tr><td>Context: avg volume</td><td>Average volume in past 5 minutes</td><td>mean(volume where t ≥ current_t − 5min)</td></tr>
+            <tr><td>Context: price range</td><td>Price range in past 5 minutes</td><td>(max(high) − min(low)) / mean(close)</td></tr>
+        </tbody>
+    </table>
+    <img src="./assets/img/dataEDA_10_0.png" alt="Feature distributions">
+    <p class="img-caption">Figure 2: Distribution of the nine engineered features.</p>
     <p>
         <b>Labeling</b>. Labels are derived using the triple‑barrier method with volatility‑scaled price barriers and a 20‑minute time horizon. We 
         compute an exponentially‑weighted rolling standard deviation of returns (halflife = 50 bars) and set upper and lower 
@@ -251,9 +360,8 @@
         barrier being breached. Across our processed dataset, up and down labels are roughly balanced while neutral events are rare. 
         Holding periods cluster around 30–100 seconds.
     </p>
-    <img src="./assets/img/dataEDA_6_0.png" alt="Two bar charts. Left: labels −1, 0, 1—down and up are nearly equal (~360 each); 
-    neutral is rare (~10). Right: first barrier hit—lower and upper occur most often and are similar; time-out is uncommon (~5).">
-    <p>
+    <img src="./assets/img/dataEDA_6_0.png" alt="Label distribution">
+    <p class="img-caption">Figure 3: Triple-barrier label distribution.</p>
     <p>
         <b>Cross-Validation</b>. Finally, we partitioned the data using purged, embargoed cross‑validation. In a leave‑one‑day‑out 
         (LODO) scheme, we hold out one trading day for validation and train on the remaining days. We purge any training samples 
@@ -267,29 +375,51 @@
     <h4>GMM: Unsupervised Overextension Detector</h4>
     <p>
         To automatically identify overextended price moves without supervision, we fit a Gaussian Mixture Model (GMM) to the 
-        nine‑dimensional feature vectors constructed from the volume bars. The GMM assumes that the joint distribution of “normal” 
-        events can be expressed as a weighted sum of multivariate Gaussians; low‑probability outliers under this density correspond 
+        nine‑dimensional feature vectors constructed from the volume bars. A GMM models the data as a weighted sum of <em>k</em> 
+        multivariate Gaussian <em>components</em> (clusters), where each component represents a distinct pattern or regime in the feature 
+        space. We test 2 to 8 components to balance model flexibility against complexity; fewer than 2 provides insufficient expressiveness, 
+        while more than 8 risks overfitting and computational burden on our dataset size. The GMM assigns each point a probability density: 
+        "normal" events receive high density (high probability) under the learned distribution, while low‑probability outliers correspond 
         to unusual, potentially overextended situations. We prefer GMMs over simple z‑scores because they capture correlations and 
         multimodality in the feature space and adapt to regime shifts by blending multiple covariance structures [4].
     </p>
     <p>
-        The model is trained on four of the five trading days and tested on the remaining day. Prior to training we drop rows with 
-        missing or infinite feature values (about 500 samples) and standardize each feature using a <code>StandardScaler</code> fit 
-        only on the training set. We tune the number of mixture components (<code>k</code>) and covariance type (<code>full</code> 
-        vs. <code>diag</code>) via day‑level LODO cross‑validation on the training data. The best configuration uses 
-        <code>k = 8</code> components with full covariance, yielding a mean cross‑validated log‑likelihood of –7.55 and the lowest 
-        Bayesian Information Criterion (BIC) among the candidates.
+        The model is trained on four of the five trading days (October 2, 3, 6, 7) and tested on the remaining day (October 8). 
+        Prior to training we drop rows with missing or infinite feature values (400 training samples, 100 test samples) and standardize 
+        each feature using a <code>StandardScaler</code> fit only on the training set. We tune the number of mixture components 
+        (<code>k</code>) and covariance type (<code>full</code> vs. <code>diag</code>) via day‑level LODO cross‑validation on the 
+        training data. The best configuration uses <code>k = 8</code> components with full covariance, yielding a mean cross‑validated 
+        log‑likelihood of –7.55 and the lowest Bayesian Information Criterion (BIC) among the candidates.
     </p>
+    <table>
+        <caption><strong>GMM Configuration and Model Selection</strong></caption>
+        <thead>
+            <tr>
+                <th>Parameter</th><th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Number of components (k)</td><td>8</td></tr>
+            <tr><td>Covariance type</td><td>Full</td></tr>
+            <tr><td>Training samples (cleaned)</td><td>37,793</td></tr>
+            <tr><td>Test samples (cleaned)</td><td>8,562</td></tr>
+            <tr><td>Feature dimensionality</td><td>9</td></tr>
+            <tr><td>CV mean log-likelihood</td><td>–7.55</td></tr>
+            <tr><td>Train AIC</td><td>539,717</td></tr>
+            <tr><td>Train BIC</td><td>543,466</td></tr>
+            <tr><td>Threshold quantile</td><td>5th percentile</td></tr>
+            <tr><td>Threshold value</td><td>–14.43</td></tr>
+        </tbody>
+    </table>
     <p>
         After fitting, we compute the per‑sample log‑likelihood under the learned GMM. Events with log‑likelihood below the 
         5th percentile of the training distribution are flagged as overextension candidates. The threshold (–14.43) is chosen 
-        purely from the train distribution. These flags are not final trading signals, they simply mark the subset of bars that 
+        purely from the train distribution. These flags are not final trading signals; they simply mark the subset of bars that 
         may warrant further analysis by the supervised opportunity classifier. For interpretability we also record the mixture 
         component assignments, which can reveal clusters of feature patterns associated with extremes.
     </p>
-    <img src="./assets/img/gmm_14_1.png" alt="Line chart titled “GMM model selection (LODO CV)” showing CV mean log-likelihood 
-    versus number of components (2–8). Two lines: cov=full consistently higher than cov=diag; both improve (less negative) as 
-    components increase.">
+    <img src="./assets/img/gmm_14_1.png" alt="GMM model selection">
+    <p class="img-caption">Figure 4: GMM model selection via LODO cross-validation showing full covariance models consistently outperform diagonal covariance.</p>
 
     <h4>Supervised Opportunity Classifier</h4>
     <p>Random Forest trained on the overextension candidates; it outputs the probability of reversion.</p>
@@ -302,37 +432,127 @@
 
     <h3>GMM: Unsupervised Overextension Detector</h3>
     <p>
-        On the fifth (test) day (October 8), the fitted GMM produced a mean log‑likelihood of –7.02 compared with –7.13 on the 
-        training days, suggesting that the model generalizes reasonably well across days despite potential regime shifts. Using the 
-        5th percentile threshold (–14.43), about 5.0% of training bars and 5.2% of test bars were flagged as overextension 
-        candidates. This stability between train and test indicates that the density estimate is not overfitting to a particular 
-        day’s distribution. A breakdown of flagged vs. unflagged labels shows that both up and down events are represented in 
+        <b>Model Selection and Information Criteria</b>. We evaluated GMM configurations with 2 to 8 components and two covariance types 
+        (full and diagonal) using day‑level LODO cross‑validation. Model selection was guided by three criteria: cross‑validated 
+        log‑likelihood (higher is better), Akaike Information Criterion (AIC), and Bayesian Information Criterion (BIC). 
+    </p>
+    <p>
+        <b>Log-Likelihood</b>. In an unsupervised setting without ground-truth labels, 
+        log‑likelihood measures how well the model explains the observed data distribution. It represents the average log‑probability 
+        that the fitted GMM assigns to each data point; higher (less negative) values indicate the model assigns higher probability to 
+        the observed feature patterns, meaning it better captures the underlying structure. We evaluate log‑likelihood on held‑out validation 
+        days to assess generalization: if a model fits the training distribution well but produces much lower log‑likelihood on validation 
+        data, it has likely overfit. Our cross‑validation strategy ensures that the selected model generalizes across different trading days.
+    </p>
+    <p>
+        The 8‑component full‑covariance model achieved the highest CV log‑likelihood (–7.55) and the lowest BIC (543,466) among all 
+        candidates tested. AIC and BIC balance goodness‑of‑fit (measured by log‑likelihood) against model complexity, with BIC applying 
+        a stronger penalty for additional parameters. Although the full covariance structure introduces more parameters (increasing AIC to 
+        539,717), the better fit and lower BIC justify the additional complexity. The diagonal‑covariance models consistently performed worse, 
+        suggesting that feature correlations (e.g., between VWAP z-score and Bollinger position) are important for accurately modeling the 
+        joint distribution.
+    </p>
+    <table>
+        <caption><strong>GMM Model Selection Results (Top 5 Configurations)</strong></caption>
+        <thead>
+            <tr>
+                <th>k</th><th>Covariance</th><th>CV Mean Log-Lik</th><th>CV Std</th><th>BIC</th><th>AIC</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>8</td><td>full</td><td>–7.55</td><td>0.57</td><td>543,466</td><td>539,717</td></tr>
+            <tr><td>7</td><td>full</td><td>–7.61</td><td>0.44</td><td>556,632</td><td>553,353</td></tr>
+            <tr><td>6</td><td>full</td><td>–8.03</td><td>0.48</td><td>612,236</td><td>609,427</td></tr>
+            <tr><td>5</td><td>full</td><td>–8.22</td><td>0.76</td><td>624,835</td><td>622,495</td></tr>
+            <tr><td>4</td><td>full</td><td>–8.28</td><td>0.69</td><td>594,615</td><td>592,745</td></tr>
+        </tbody>
+    </table>
+    <p>
+        <b>Generalization and Candidate Flagging</b>. On the fifth (test) day (October 8), the fitted GMM produced a mean log‑likelihood 
+        of –7.02 compared with –7.13 on the training days. Since these values are very close (and the test value is actually slightly higher), 
+        the model generalizes well: it explains the test day's feature distribution about as well as it explains the training data. This similarity 
+        suggests that the model has learned robust patterns that persist across different trading days rather than overfitting to training‑specific 
+        idiosyncrasies. If the test log‑likelihood had been substantially lower (more negative), it would indicate the model failed to capture 
+        generalizable structure.
+    </p>
+    <p>
+        Using the 5th percentile threshold (–14.43), about 5.0% of training bars and 5.2% of test bars were 
+        flagged as overextension candidates. This stable candidate rate across train and test confirms that the threshold defined on the training 
+        distribution transfers reliably to new data. The flags represent anomalous feature combinations that fall in the low‑density tails of the 
+        learned distribution, marking potential mean‑reversion opportunities for downstream supervised analysis.
+    </p>
+    <table>
+        <caption><strong>GMM Performance</strong></caption>
+        <thead>
+            <tr>
+                <th>Metric</th><th>Train</th><th>Test</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Sample count</td><td>37,793</td><td>8,562</td></tr>
+            <tr><td>Mean log-likelihood</td><td>–7.13</td><td>–7.02</td></tr>
+            <tr><td>Candidate rate</td><td>5.00%</td><td>5.21%</td></tr>
+            <tr><td>Candidates flagged</td><td>1,890</td><td>446</td></tr>
+        </tbody>
+    </table>
+    <p>
+        A breakdown of flagged vs. unflagged labels shows that both up and down events are represented in 
         roughly equal proportions: in the train set the flagged subset contained 976 positive and 886 negative labels, while the 
-        unflagged subset contained 18,086 positive and 17,442 negative labels. Neutral (label 0) events are rare overall (≈1%) and 
+        unflagged subset contained 18,086 positive and 17,442 negative labels. Neutral (label 0) events are rare overall (≈1%) and 
         only a handful are flagged.
     </p>
+    <table>
+        <caption><strong>Label Distribution by Flag Status (Training Set)</strong></caption>
+        <thead>
+            <tr>
+                <th>Label</th><th>Flagged Count</th><th>Flagged %</th><th>Unflagged Count</th><th>Unflagged %</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Up (+1)</td><td>976</td><td>51.6%</td><td>18,086</td><td>50.4%</td></tr>
+            <tr><td>Down (–1)</td><td>886</td><td>46.9%</td><td>17,442</td><td>48.6%</td></tr>
+            <tr><td>Neutral (0)</td><td>28</td><td>1.5%</td><td>375</td><td>1.0%</td></tr>
+            <tr><td>Total</td><td>1,890</td><td>100%</td><td>35,903</td><td>100%</td></tr>
+        </tbody>
+    </table>
     <p>
-        The log‑likelihood distributions overlap between train and test and flagged points cluster in low‑density regions when 
-        projected into the first two principal components. The flagged bars often correspond to large deviations from VWAP, extreme 
-        Bollinger positions, high relative volume or unusual momentum patterns, consistent with our intuition of overextended price 
-        moves. However, because the GMM operates on the joint feature space, some moderate deviations can also be flagged if they 
-        occur in an atypical feature combination. The model does not assign explicit probabilities to labels; instead, the flags 
-        simply identify potential mean‑reversion opportunities for further screening.
+        <b>Interpretability and Feature Space Analysis</b>. The log‑likelihood distributions overlap between train and test and flagged 
+        points cluster in low‑density regions when projected into the first two principal components. The flagged bars often correspond 
+        to large deviations from VWAP, extreme Bollinger positions, high relative volume or unusual momentum patterns, consistent with 
+        our intuition of overextended price moves. However, because the GMM operates on the joint feature space, some moderate deviations 
+        can also be flagged if they occur in an atypical feature combination. The model does not assign explicit probabilities to labels; 
+        instead, the flags simply identify potential mean‑reversion opportunities for further screening.
     </p>
-    <img src="./assets/img/gmm_15_5.png" alt="Overlapping histograms of GMM log-likelihoods for train (blue) and test (orange). 
-    Most mass near 0 with a thin left tail. A vertical red dashed line around −14 marks the threshold. Title: “Log-likelihood 
-    distributions with threshold.” Axes: log-likelihood (x), density (y).">
-    <img src="./assets/img/gmm_15_2.png" alt="Bar chart “GMM candidate rate by ticker — 2025-10-08.” Vertical bars sorted descending. 
-    PCG highest (~21%), then DECK (~16%), INTC (~14%), SMCI (~10%). Middle tickers around 3–7%. Several near 1–2% (TTD, KVUE, MCHP, 
-    ON, SLB, UBER, DOW).">
-    <img src="./assets/img/gmm_14_5.png" alt="Scatter plot of test PCA projection (PC1 vs PC2). Blue dots = not flagged; orange 
-    dots = GMM-flagged. Blue cluster dense near center; flagged points sparsely distributed toward the outer edges and along the 
-    negative PC2 tail. Title: “Test PCA (colored by GMM candidate flag)”.">
-    <img src="./assets/img/gmm_15_6.png" alt="Scatter plot of test-day points: x = feat_vwap_zscore, y = feat_bollinger_position. 
-    Blue (not flagged) form a dense, positively sloped ellipse around (0,0). Orange (flagged) are sparse, mostly at extremes and 
-    outer edges. Legend shows categories. Title notes date 2025-10-08.">
+
+    <div class="slideshow-container">
+        <div class="slide active">
+            <img src="./assets/img/gmm_15_5.png" alt="GMM log-likelihood distributions">
+            <div class="slide-caption">Figure 5a: Overlapping log-likelihood distributions for train and test sets with 5th percentile threshold marked.</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/gmm_15_2.png" alt="GMM candidate rate by ticker">
+            <div class="slide-caption">Figure 5b: GMM candidate rate by ticker on test day showing variation across stocks.</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/gmm_14_5.png" alt="PCA projection of flagged points">
+            <div class="slide-caption">Figure 5c: PCA projection showing flagged candidates (orange) cluster in low-density regions away from normal events (blue).</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/gmm_15_6.png" alt="Feature space scatter">
+            <div class="slide-caption">Figure 5d: VWAP z-score vs. Bollinger position scatter plot with flagged events.</div>
+        </div>
+        <button class="slideshow-nav prev" onclick="changeSlide(-1)">&#10094;</button>
+        <button class="slideshow-nav next" onclick="changeSlide(1)">&#10095;</button>
+        <div class="dots-container">
+            <span class="dot active" onclick="currentSlide(0)"></span>
+            <span class="dot" onclick="currentSlide(1)"></span>
+            <span class="dot" onclick="currentSlide(2)"></span>
+            <span class="dot" onclick="currentSlide(3)"></span>
+        </div>
+    </div>
+
     <p>
-        While the candidate rate of ~5% is a reasonable starting point, several avenues exist to refine the unsupervised detector. 
+        <b>Next Steps</b>. While the candidate rate of ~5% is a reasonable starting point, several avenues exist to refine the unsupervised detector. 
         First, the feature set could be expanded to include additional context such as order‑book imbalance or realized volatility. 
         Second, alternative density estimators (e.g., Kernel Density Estimation or Normalizing Flows) might capture heavy tails and 
         nonlinear dependencies better than Gaussian mixtures. Third, the threshold could be adaptively set per ticker or per day to 
