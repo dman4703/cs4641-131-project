@@ -1,6 +1,6 @@
 {
   "best_params": {
-    "n_components": 8,
+    "n_components": 12,
     "covariance_type": "full"
   },
   "train_days": [
@@ -10,7 +10,7 @@
     "2025-10-07"
   ],
   "test_day": "2025-10-08",
-  "threshold": -14.434934148412143,
+  "threshold": -14.181503264947787,
   "threshold_quantile": 0.05,
   "feature_names": [
     "feat_vwap_zscore",
@@ -24,32 +24,32 @@
     "feat_context_price_range"
   ],
   "metrics": {
-    "train_mean_loglik": -7.1288217311766315,
-    "test_mean_loglik": -7.021885873583113,
+    "train_mean_loglik": -6.829173476484342,
+    "test_mean_loglik": -6.857092879641654,
     "train_candidate_rate": 0.05000926097425449,
-    "test_candidate_rate": 0.05209063302966597,
+    "test_candidate_rate": 0.0533753795842093,
     "n_train": 37793,
     "n_test": 8562,
-    "n_components": 8,
+    "n_components": 12,
     "train_label_dist_flagged": {
-      "1": 976,
-      "-1": 886,
-      "0": 28
+      "1": 963,
+      "-1": 896,
+      "0": 31
     },
     "train_label_dist_unflagged": {
-      "1": 18086,
-      "-1": 17442,
-      "0": 375
+      "1": 18099,
+      "-1": 17432,
+      "0": 372
     },
     "test_label_dist_flagged": {
-      "1": 221,
-      "-1": 211,
-      "0": 14
+      "1": 235,
+      "-1": 206,
+      "0": 16
     },
     "test_label_dist_unflagged": {
-      "1": 4217,
-      "-1": 3814,
-      "0": 85
+      "1": 4203,
+      "-1": 3819,
+      "0": 83
     }
   }
 }

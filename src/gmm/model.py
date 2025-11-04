@@ -128,9 +128,8 @@ def tune_and_train_gmm(
                 "train_aic": train_aic,
             })
 
-    # Choose best: highest CV mean LLK; tie-breaker: lower BIC
+    # Sort results for reporting (not used for selection): higher CV, then lower BIC
     def sort_key(item: Dict) -> Tuple:
-        # Negate BIC for sorting descending by quality (lower BIC is better)
         bic = item.get("train_bic", np.inf)
         return (item.get("cv_mean_loglik", -np.inf), -np.inf if np.isnan(bic) else -bic)
 
@@ -138,7 +137,33 @@ def tune_and_train_gmm(
     if not grid_results_sorted:
         raise RuntimeError("No GMM settings could be evaluated")
 
-    best = grid_results_sorted[0]
+    # Selection rule: 1-std CV rule, then choose lowest BIC among candidates
+    valid_entries = [r for r in grid_results if not np.isnan(r.get("cv_mean_loglik", np.nan))]
+    if not valid_entries:
+        best = grid_results_sorted[0]
+    else:
+        best_cv = max(r["cv_mean_loglik"] for r in valid_entries)
+        # Use std from the model(s) achieving best CV; fallback to 0.0 if unavailable
+        std_candidates = [r.get("cv_std_loglik", np.nan) for r in valid_entries if r["cv_mean_loglik"] == best_cv]
+        best_cv_std = float(std_candidates[0]) if std_candidates and not np.isnan(std_candidates[0]) else 0.0
+
+        within_one_std = [
+            r for r in valid_entries
+            if r["cv_mean_loglik"] >= best_cv - best_cv_std
+        ]
+
+        # Among candidates, pick the one with the lowest BIC (ignore NaN BICs if possible)
+        with_bic = [r for r in within_one_std if not np.isnan(r.get("train_bic", np.nan))]
+        if with_bic:
+            best = min(with_bic, key=lambda r: r["train_bic"]) 
+        else:
+            # Fallback to the highest CV if BICs are not available
+            best = max(within_one_std, key=lambda r: r["cv_mean_loglik"]) if within_one_std else grid_results_sorted[0]
+
+        logger.info(
+            "Model selection via 1-std CV rule then BIC: %d candidates within 1 std of best CV (best CV=%.4f, std=%.4f); selected k=%d cov=%s with BIC=%.1f and CV mean LLK=%.4f",
+            len(within_one_std), best_cv, best_cv_std, int(best["n_components"]), str(best["covariance_type"]), float(best.get("train_bic", float("nan"))), float(best.get("cv_mean_loglik", float("nan")))
+        )
     best_params = GMMParams(
         n_components=int(best["n_components"]),
         covariance_type=str(best["covariance_type"]),

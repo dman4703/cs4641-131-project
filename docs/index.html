@@ -375,9 +375,8 @@
     <p>
         To automatically identify overextended price moves without supervision, we fit a Gaussian Mixture Model (GMM) to the 
         nine‑dimensional feature vectors constructed from the volume bars. A GMM models the data as a weighted sum of <em>k</em> 
-        multivariate Gaussian <em>components</em> (clusters), where each component represents a distinct pattern or regime in the feature 
-        space. We test 2 to 8 components to balance model flexibility against complexity; fewer than 2 provides insufficient expressiveness, 
-        while more than 8 risks overfitting and computational burden on our dataset size. The GMM assigns each point a probability density: 
+        multivariate Gaussian <em>components</em> (clusters), where each component represents a distinct pattern in the feature 
+        space. We test 8 to 15 components to balance model flexibility against complexity. The GMM assigns each point a probability density: 
         "normal" events receive high density (high probability) under the learned distribution, while low‑probability outliers correspond 
         to unusual, potentially overextended situations. We prefer GMMs over simple z‑scores because they capture correlations and 
         multimodality in the feature space and adapt to regime shifts by blending multiple covariance structures [4].
@@ -387,8 +386,10 @@
         Prior to training we drop rows with missing or infinite feature values (400 training samples, 100 test samples) and standardize 
         each feature using a <code>StandardScaler</code> fit only on the training set. We tune the number of mixture components 
         (<code>k</code>) and covariance type (<code>full</code> vs. <code>diag</code>) via day‑level LODO cross‑validation on the 
-        training data. The best configuration uses <code>k = 8</code> components with full covariance, yielding a mean cross‑validated 
-        log‑likelihood of –7.55 and the lowest Bayesian Information Criterion (BIC) among the candidates.
+        training data. Model selection follows two steps: first, we identify configurations within one standard deviation 
+        of the best cross‑validated log‑likelihood; second, among these candidates we choose the model with the lowest Bayesian Information 
+        Criterion (BIC). The selected configuration uses <code>k = 12</code> components with full covariance, achieving a mean cross‑validated 
+        log‑likelihood of –7.25 and the lowest BIC (523,136) among models within one standard deviation of the best CV score.
     </p>
     <table>
         <caption><strong>GMM Configuration and Model Selection</strong></caption>
@@ -398,26 +399,28 @@
             </tr>
         </thead>
         <tbody>
-            <tr><td>Number of components (k)</td><td>8</td></tr>
+            <tr><td>Number of components (k)</td><td>12</td></tr>
             <tr><td>Covariance type</td><td>Full</td></tr>
-            <tr><td>Training samples (cleaned)</td><td>37,793</td></tr>
-            <tr><td>Test samples (cleaned)</td><td>8,562</td></tr>
+            <tr><td>Training samples</td><td>37,793</td></tr>
+            <tr><td>Test samples</td><td>8,562</td></tr>
             <tr><td>Feature dimensionality</td><td>9</td></tr>
-            <tr><td>CV mean log-likelihood</td><td>–7.55</td></tr>
-            <tr><td>Train AIC</td><td>539,717</td></tr>
-            <tr><td>Train BIC</td><td>543,466</td></tr>
-            <tr><td>Threshold quantile</td><td>5th percentile</td></tr>
-            <tr><td>Threshold value</td><td>–14.43</td></tr>
+            <tr><td>CV mean log-likelihood</td><td>–7.25</td></tr>
+            <tr><td>Train AIC</td><td>517,508</td></tr>
+            <tr><td>Train BIC</td><td>523,136</td></tr>
+            <tr><td>Threshold quantile (primary)</td><td>5th percentile</td></tr>
+            <tr><td>Threshold value (5%)</td><td>–14.18</td></tr>
+            <tr><td>Threshold value (10%, persisted for comparison)</td><td>–12.05</td></tr>
         </tbody>
     </table>
     <p>
         After fitting, we compute the per‑sample log‑likelihood under the learned GMM. Events with log‑likelihood below the 
-        5th percentile of the training distribution are flagged as overextension candidates. The threshold (–14.43) is chosen 
-        purely from the train distribution. These flags are not final trading signals; they simply mark the subset of bars that 
+        5th percentile of the training distribution are flagged as overextension candidates. The threshold (–14.18) is chosen 
+        purely from the train distribution. For future comparison and sensitivity analysis, we also persist candidates using a 
+        10th percentile threshold (–12.05). These flags are not final trading signals; they simply mark the subset of bars that 
         may warrant further analysis by the supervised opportunity classifier. For interpretability we also record the mixture 
         component assignments, which can reveal clusters of feature patterns associated with extremes.
     </p>
-    <img src="./assets/img/gmm_14_1.png" alt="GMM model selection">
+    <img src="./assets/img/gmm_15_0.png" alt="GMM model selection">
     <p class="img-caption">Figure 4: GMM model selection via LODO cross-validation showing full covariance models consistently outperform diagonal covariance.</p>
 
     <h4>Supervised Opportunity Classifier</h4>
@@ -431,9 +434,10 @@
 
     <h3>GMM: Unsupervised Overextension Detector</h3>
     <p>
-        <b>Model Selection and Information Criteria</b>. We evaluated GMM configurations with 2 to 8 components and two covariance types 
-        (full and diagonal) using day‑level LODO cross‑validation. Model selection was guided by three criteria: cross‑validated 
-        log‑likelihood (higher is better), Akaike Information Criterion (AIC), and Bayesian Information Criterion (BIC). 
+        <b>Model Selection and Information Criteria</b>. We evaluated GMM configurations with 8 to 15 components and two covariance types 
+        (full and diagonal) using day‑level LODO cross‑validation. Model selection was guided by two constrains: first, we identify models 
+        within one standard deviation of the best cross‑validated log‑likelihood; second, among these candidates we select the configuration 
+        with the lowest Bayesian Information Criterion (BIC). This prevents overfitting to validation noise while favoring simpler models when performance is comparable.
     </p>
     <p>
         <b>Log-Likelihood</b>. In an unsupervised setting without ground-truth labels, 
@@ -444,12 +448,12 @@
         data, it has likely overfit. Our cross‑validation strategy ensures that the selected model generalizes across different trading days.
     </p>
     <p>
-        The 8‑component full‑covariance model achieved the highest CV log‑likelihood (–7.55) and the lowest BIC (543,466) among all 
-        candidates tested. AIC and BIC balance goodness‑of‑fit (measured by log‑likelihood) against model complexity, with BIC applying 
-        a stronger penalty for additional parameters. Although the full covariance structure introduces more parameters (increasing AIC to 
-        539,717), the better fit and lower BIC justify the additional complexity. The diagonal‑covariance models consistently performed worse, 
-        suggesting that feature correlations (e.g., between VWAP z-score and Bollinger position) are important for accurately modeling the 
-        joint distribution.
+        Among the 16 configurations evaluated, k=15 full covariance achieved the best CV log‑likelihood (–7.15), but k=12 full covariance was selected due to its 
+        substantially lower BIC (523,136) compared to k=15 (530,430), despite a marginal CV difference of only 0.10. AIC and BIC balance 
+        goodness‑of‑fit against model complexity, with BIC applying a stronger penalty for additional parameters. The 7,000‑point BIC 
+        improvement of k=12 over k=15 indicates that three fewer components provide a better trade‑off. 
+        The diagonal‑covariance models consistently performed worse, suggesting that feature correlations (e.g., between VWAP z-score 
+        and Bollinger position) are important for accurately modeling the joint distribution.
     </p>
     <table>
         <caption><strong>GMM Model Selection Results (Top 5 Configurations)</strong></caption>
@@ -459,26 +463,26 @@
             </tr>
         </thead>
         <tbody>
-            <tr><td>8</td><td>full</td><td>–7.55</td><td>0.57</td><td>543,466</td><td>539,717</td></tr>
-            <tr><td>7</td><td>full</td><td>–7.61</td><td>0.44</td><td>556,632</td><td>553,353</td></tr>
-            <tr><td>6</td><td>full</td><td>–8.03</td><td>0.48</td><td>612,236</td><td>609,427</td></tr>
-            <tr><td>5</td><td>full</td><td>–8.22</td><td>0.76</td><td>624,835</td><td>622,495</td></tr>
-            <tr><td>4</td><td>full</td><td>–8.28</td><td>0.69</td><td>594,615</td><td>592,745</td></tr>
+            <tr><td>15</td><td>full</td><td>–7.15</td><td>0.49</td><td>530,430</td><td>523,393</td></tr>
+            <tr><td>12</td><td>full</td><td>–7.25</td><td>0.37</td><td>523,136</td><td>517,508</td></tr>
+            <tr><td>13</td><td>full</td><td>–7.26</td><td>0.51</td><td>524,511</td><td>518,414</td></tr>
+            <tr><td>11</td><td>full</td><td>–7.30</td><td>0.49</td><td>536,847</td><td>531,689</td></tr>
+            <tr><td>14</td><td>full</td><td>–7.31</td><td>0.62</td><td>524,836</td><td>518,269</td></tr>
         </tbody>
     </table>
     <p>
-        <b>Generalization and Candidate Flagging</b>. On the fifth (test) day (October 8), the fitted GMM produced a mean log‑likelihood 
-        of –7.02 compared with –7.13 on the training days. Since these values are very close (and the test value is actually slightly higher), 
-        the model generalizes well: it explains the test day's feature distribution about as well as it explains the training data. This similarity 
-        suggests that the model has learned robust patterns that persist across different trading days rather than overfitting to training‑specific 
-        idiosyncrasies. If the test log‑likelihood had been substantially lower (more negative), it would indicate the model failed to capture 
-        generalizable structure.
+        <b>Generalization and Candidate Flagging</b>. On the fifth (test) day (October 8), the fitted k=12 GMM produced a mean log‑likelihood 
+        of –6.86 compared with –6.83 on the training days. These values are nearly identical, confirming that the model generalizes well: 
+        it explains the test day's feature distribution about as well as it explains the training data. This similarity suggests that the model 
+        has learned patterns that persist across different trading days rather than overfitting. 
+        If the test log‑likelihood had been substantially lower (more negative), it would indicate the model failed to capture generalizable structure.
     </p>
     <p>
-        Using the 5th percentile threshold (–14.43), about 5.0% of training bars and 5.2% of test bars were 
+        Using the 5th percentile threshold (–14.18), about 5.0% of training bars and 5.3% of test bars were 
         flagged as overextension candidates. This stable candidate rate across train and test confirms that the threshold defined on the training 
-        distribution transfers reliably to new data. The flags represent anomalous feature combinations that fall in the low‑density tails of the 
-        learned distribution, marking potential mean‑reversion opportunities for downstream supervised analysis.
+        distribution transfers reliably to new data. Additionally, we persist a 10th percentile threshold (–12.05) 
+        for future sensitivity analysis and comparison with the stricter 5% threshold. The flags represent anomalous feature combinations 
+        that fall in the low‑density tails of the learned distribution, marking potential mean‑reversion opportunities for downstream supervised analysis.
     </p>
     <table>
         <caption><strong>GMM Performance</strong></caption>
@@ -489,28 +493,28 @@
         </thead>
         <tbody>
             <tr><td>Sample count</td><td>37,793</td><td>8,562</td></tr>
-            <tr><td>Mean log-likelihood</td><td>–7.13</td><td>–7.02</td></tr>
-            <tr><td>Candidate rate</td><td>5.00%</td><td>5.21%</td></tr>
-            <tr><td>Candidates flagged</td><td>1,890</td><td>446</td></tr>
+            <tr><td>Mean log-likelihood</td><td>–6.83</td><td>–6.86</td></tr>
+            <tr><td>Candidate rate (5%)</td><td>5.00%</td><td>5.34%</td></tr>
+            <tr><td>Candidates flagged (5%)</td><td>1,890</td><td>457</td></tr>
         </tbody>
     </table>
     <p>
         A breakdown of flagged vs. unflagged labels shows that both up and down events are represented in 
-        roughly equal proportions: in the train set the flagged subset contained 976 positive and 886 negative labels, while the 
-        unflagged subset contained 18,086 positive and 17,442 negative labels. Neutral (label 0) events are rare overall (≈1%) and 
+        roughly equal proportions: in the train set the flagged subset contained 963 positive and 896 negative labels, while the 
+        unflagged subset contained 18,099 positive and 17,432 negative labels. Neutral (label 0) events are rare overall (≈1%) and 
         only a handful are flagged.
     </p>
     <table>
-        <caption><strong>Label Distribution by Flag Status (Training Set)</strong></caption>
+        <caption><strong>Label Distribution by Flag Status (Training Set, 5%)</strong></caption>
         <thead>
             <tr>
                 <th>Label</th><th>Flagged Count</th><th>Flagged %</th><th>Unflagged Count</th><th>Unflagged %</th>
             </tr>
         </thead>
         <tbody>
-            <tr><td>Up (+1)</td><td>976</td><td>51.6%</td><td>18,086</td><td>50.4%</td></tr>
-            <tr><td>Down (–1)</td><td>886</td><td>46.9%</td><td>17,442</td><td>48.6%</td></tr>
-            <tr><td>Neutral (0)</td><td>28</td><td>1.5%</td><td>375</td><td>1.0%</td></tr>
+            <tr><td>Up (+1)</td><td>963</td><td>51.0%</td><td>18,099</td><td>50.5%</td></tr>
+            <tr><td>Down (–1)</td><td>896</td><td>47.4%</td><td>17,432</td><td>48.6%</td></tr>
+            <tr><td>Neutral (0)</td><td>31</td><td>1.6%</td><td>372</td><td>1.0%</td></tr>
             <tr><td>Total</td><td>1,890</td><td>100%</td><td>35,903</td><td>100%</td></tr>
         </tbody>
     </table>
@@ -525,19 +529,19 @@
 
     <div class="slideshow-container">
         <div class="slide active">
-            <img src="./assets/img/gmm_15_5.png" alt="GMM log-likelihood distributions">
+            <img src="./assets/img/gmm_16_5.png" alt="GMM log-likelihood distributions">
             <div class="slide-caption">Figure 5a: Overlapping log-likelihood distributions for train and test sets with 5th percentile threshold marked.</div>
         </div>
         <div class="slide">
-            <img src="./assets/img/gmm_15_2.png" alt="GMM candidate rate by ticker">
+            <img src="./assets/img/gmm_16_2.png" alt="GMM candidate rate by ticker">
             <div class="slide-caption">Figure 5b: GMM candidate rate by ticker on test day showing variation across stocks.</div>
         </div>
         <div class="slide">
-            <img src="./assets/img/gmm_14_5.png" alt="PCA projection of flagged points">
+            <img src="./assets/img/gmm_15_2.png" alt="PCA projection of flagged points">
             <div class="slide-caption">Figure 5c: PCA projection showing flagged candidates (orange) cluster in low-density regions away from normal events (blue).</div>
         </div>
         <div class="slide">
-            <img src="./assets/img/gmm_15_6.png" alt="Feature space scatter">
+            <img src="./assets/img/gmm_16_6.png" alt="Feature space scatter">
             <div class="slide-caption">Figure 5d: VWAP z-score vs. Bollinger position scatter plot with flagged events.</div>
         </div>
         <button class="slideshow-nav prev" onclick="changeSlide(-1)">&#10094;</button>
