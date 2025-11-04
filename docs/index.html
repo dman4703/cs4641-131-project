@@ -233,25 +233,6 @@
             <tr><td>at_ask</td><td>int64</td><td>Flag: trade at ask (1) or not (0)</td></tr>
         </tbody>
     </table>
-    <table>
-        <caption><strong>Data Cleaning Quality Metrics</strong></caption>
-        <thead>
-            <tr>
-                <th>Metric</th><th>Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td>Raw tick records</td><td>21,419,919</td></tr>
-            <tr><td>Final cleaned trades</td><td>1,130,327</td></tr>
-            <tr><td>Retention rate</td><td>5.3%</td></tr>
-            <tr><td>Avg duplicate removal</td><td>33.07%</td></tr>
-            <tr><td>Avg NBBO coverage</td><td>99.99%</td></tr>
-            <tr><td>Avg crossed quotes</td><td>0.52%</td></tr>
-            <tr><td>Trades dropped (condition codes)</td><td>2,005,302</td></tr>
-            <tr><td>Trades dropped (no NBBO)</td><td>140</td></tr>
-            <tr><td>Avg processing time per file</td><td>22.48s</td></tr>
-        </tbody>
-    </table>
 
 
     <h2><u>Problem Definition</u></h2>
@@ -283,6 +264,24 @@
         When fewer than 20 tickers satisfied these strict criteria we filled the remainder with names closest to the volatility 
         midpoint while still prioritizing liquidity.
     </p>
+    <table>
+        <caption><strong>Data Cleaning Metrics</strong></caption>
+        <thead>
+            <tr>
+                <th>Metric</th><th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Raw tick records</td><td>21,419,919</td></tr>
+            <tr><td>Final cleaned trades</td><td>1,130,327</td></tr>
+            <tr><td>Retention rate</td><td>5.3%</td></tr>
+            <tr><td>Avg duplicate removal</td><td>33.07%</td></tr>
+            <tr><td>Avg NBBO coverage</td><td>99.99%</td></tr>
+            <tr><td>Avg crossed quotes</td><td>0.52%</td></tr>
+            <tr><td>Trades dropped (condition codes)</td><td>2,005,302</td></tr>
+            <tr><td>Trades dropped (no NBBO)</td><td>140</td></tr>
+        </tbody>
+    </table>
     <p>
         <b>Cleaning</b>. Bloomberg headers and invalid rows were removed, New York timestamps were parsed to UTC, exact repeats were 
         deduplicated, trades were split from quotes and a National Best Bid and Offer (NBBO) was built by forward‑filling quotes 
