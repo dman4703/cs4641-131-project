@@ -384,7 +384,7 @@
     <p>
         The model is trained on four of the five trading days (October 2, 3, 6, 7) and tested on the remaining day (October 8). 
         Prior to training we drop rows with missing or infinite feature values (400 training samples, 100 test samples) and standardize 
-        each feature using a <code>StandardScaler</code> fit only on the training set. We tune the number of mixture components 
+        each feature in the training set. We tune the number of mixture components 
         (<code>k</code>) and covariance type (<code>full</code> vs. <code>diag</code>) via day‑level LODO cross‑validation on the 
         training data. Model selection follows two steps: first, we identify configurations within one standard deviation 
         of the best cross‑validated log‑likelihood; second, among these candidates we choose the model with the lowest Bayesian Information 
@@ -451,9 +451,11 @@
         Among the 16 configurations evaluated, k=15 full covariance achieved the best CV log‑likelihood (–7.15), but k=12 full covariance was selected due to its 
         substantially lower BIC (523,136) compared to k=15 (530,430), despite a marginal CV difference of only 0.10. AIC and BIC balance 
         goodness‑of‑fit against model complexity, with BIC applying a stronger penalty for additional parameters. The 7,000‑point BIC 
-        improvement of k=12 over k=15 indicates that three fewer components provide a better trade‑off. 
-        The diagonal‑covariance models consistently performed worse, suggesting that feature correlations (e.g., between VWAP z-score 
-        and Bollinger position) are important for accurately modeling the joint distribution.
+        improvement of k=12 over k=15 indicates that three fewer components provide a better trade‑off. Note that AIC and BIC values 
+        scale linearly with sample size (n = 37,793), so absolute magnitudes in the hundreds of thousands are expected; what matters for 
+        model comparison is the relative difference between candidates. The diagonal‑covariance models consistently performed worse, 
+        suggesting that feature correlations (e.g., between VWAP z-score and Bollinger position) are important for accurately modeling 
+        the joint distribution.
     </p>
     <table>
         <caption><strong>GMM Model Selection Results (Top 5 Configurations)</strong></caption>

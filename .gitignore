@@ -175,7 +175,6 @@ cython_debug/
 
 # Common serialized model/checkpoint formats
 *.pkl
-*.joblib
 *.h5
 *.hdf5
 *.onnx
