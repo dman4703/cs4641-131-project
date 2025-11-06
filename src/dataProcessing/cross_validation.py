@@ -77,15 +77,12 @@ def create_cv_splits(
         # Get validation period boundaries
         val_start = df_all.loc[val_mask, time_start_column].min()
         
-        # Handle NaT in label_t_end by using t_end as fallback
         val_end_series = df_all.loc[val_mask, time_end_column]
-        # Filter out NaT values before taking max
         valid_val_ends = val_end_series.dropna()
         
         if len(valid_val_ends) > 0:
             val_end = valid_val_ends.max()
         else:
-            # Fallback to t_end if all label_t_end are NaT
             val_end = df_all.loc[val_mask, 't_end'].max()
         
         logger.info(f"  Validation period: {val_start} to {val_end}")
@@ -97,11 +94,9 @@ def create_cv_splits(
             sample_start = df_all.loc[idx, time_start_column]
             sample_end = df_all.loc[idx, time_end_column]
             
-            # Handle NaT: use t_end as fallback
             if pd.isna(sample_end):
                 sample_end = df_all.loc[idx, 't_end']
             
-            # Skip if still NaT (shouldn't happen but be safe)
             if pd.isna(sample_end):
                 continue
             
@@ -126,7 +121,6 @@ def create_cv_splits(
             
             # Check if sample starts within embargo period
             if sample_start <= embargo_cutoff:
-                # Only embargo samples that come after validation period
                 if sample_start > val_end:
                     embargoed_indices.append(idx)
         

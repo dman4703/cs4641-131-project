@@ -1,6 +1,6 @@
 """
 Data Cleaning Pipeline for Tick Data
-Transforms raw CSV tick data into cleaned, NBBO-enriched Parquet files.
+Transforms raw CSV tick data into cleaned Parquet files.
 """
 
 import os
@@ -24,7 +24,6 @@ def setup_logging(config: dict) -> logging.Logger:
     log_file = Path(config['logging']['log_file'])
     log_file.parent.mkdir(parents=True, exist_ok=True)
     
-    # Use UTF-8 encoding for both file and console to support Unicode characters
     logging.basicConfig(
         level=log_level,
         format='%(asctime)s [%(levelname)s] %(message)s',
@@ -33,13 +32,12 @@ def setup_logging(config: dict) -> logging.Logger:
             logging.StreamHandler(sys.stdout)
         ]
     )
-    
-    # Set stdout to UTF-8 on Windows
+
     if sys.platform == 'win32':
         try:
             sys.stdout.reconfigure(encoding='utf-8')
         except AttributeError:
-            pass  # Python < 3.7
+            pass
     
     return logging.getLogger(__name__)
 
@@ -53,7 +51,6 @@ def load_config(config_path: str = "config/preprocessing.yaml") -> dict:
 def load_codebook(codebook_path: str = "config/condition_codes.csv") -> pd.DataFrame:
     """Load condition code codebook."""
     df = pd.read_csv(codebook_path)
-    # Create lookup dict for faster access
     return df
 
 # A. Load and Validate
@@ -75,7 +72,6 @@ def load_and_validate(csv_path: Path, logger: logging.Logger) -> Tuple[pd.DataFr
     ticker = csv_path.parent.name
     
     # Read CSV, skip first 2 junk header lines
-    # low_memory=False to avoid dtype warnings on large files
     df = pd.read_csv(csv_path, skiprows=2, low_memory=False)
     stats['raw_rows'] = len(df)
     
@@ -83,7 +79,6 @@ def load_and_validate(csv_path: Path, logger: logging.Logger) -> Tuple[pd.DataFr
     df.columns = ['ts', 'type', 'price', 'size', 'cond', 'exch', 'tradetime_old', 'spread_old']
     
     # Filter out embedded header rows
-    # Remove rows where ts column contains "Dates" or other header text
     header_mask = df['ts'].astype(str).str.strip() == 'Dates'
     stats['dropped_header'] = header_mask.sum()
     df = df[~header_mask]
@@ -107,7 +102,7 @@ def load_and_validate(csv_path: Path, logger: logging.Logger) -> Tuple[pd.DataFr
     
     # Enforce dtypes
     df['price'] = pd.to_numeric(df['price'], errors='coerce')
-    df['size'] = pd.to_numeric(df['size'], errors='coerce').astype('Int64')  # Nullable int
+    df['size'] = pd.to_numeric(df['size'], errors='coerce').astype('Int64')
     df['type'] = df['type'].astype('category')
     df['exch'] = df['exch'].astype(str).astype('category')
     df['cond'] = df['cond'].astype(str)
@@ -182,7 +177,7 @@ def classify_cond_code(cond_norm: str, codebook: pd.DataFrame) -> Tuple[bool, Li
     for token in tokens:
         if token not in code_to_bucket:
             unknown_codes.append(token)
-            # Treat unknown as HARD_EXCLUDE (conservative)
+            # Treat unknown as HARD_EXCLUDE
             has_hard_exclude = True
         else:
             bucket = code_to_bucket[token]
@@ -288,12 +283,11 @@ def build_nbbo(quotes_df: pd.DataFrame, ffill_cap_seconds: int, logger: logging.
         # Create groups of consecutive valid/invalid
         time_since_valid = (nbbo.index.to_series().diff().dt.total_seconds()).fillna(0)
         
-    # Simpler approach: use ffill with limit based on time
-    # Since we have second-level timestamps, we'll do a custom ffill
+    # use ffill with limit based on time
     nbbo_filled = nbbo.copy()
     for col in ['nbb', 'nbo', 'nbb_size', 'nbo_size']:
         nbbo_filled[col] = nbbo[col].ffill()
-        # Now mask based on time gap
+        # mask based on time gap
         last_valid_idx = nbbo[col].notna()
         if last_valid_idx.any():
             # For each row, find time since last valid
@@ -308,7 +302,6 @@ def build_nbbo(quotes_df: pd.DataFrame, ffill_cap_seconds: int, logger: logging.
     
     nbbo = nbbo_filled
     
-    # Drop rows with any NaN
     nbbo_complete = nbbo.dropna()
     
     stats['total_quote_stamps'] = len(nbbo)
@@ -365,7 +358,6 @@ def merge_nbbo_to_trades(trades_df: pd.DataFrame, nbbo_df: pd.DataFrame,
         stats['trades_dropped_no_nbbo'] = len(trades_df)
         return pd.DataFrame(), stats
     
-    # Ensure both are sorted by ts
     trades_df = trades_df.sort_values('ts')
     nbbo_df = nbbo_df.sort_values('ts')
     
@@ -377,7 +369,7 @@ def merge_nbbo_to_trades(trades_df: pd.DataFrame, nbbo_df: pd.DataFrame,
         direction='backward'
     )
     
-    # Drop trades with NaN in mid or spread (no valid NBBO)
+    # Drop trades with no valid NBBO
     initial_len = len(merged)
     merged = merged.dropna(subset=['mid', 'spread'])
     
@@ -385,7 +377,7 @@ def merge_nbbo_to_trades(trades_df: pd.DataFrame, nbbo_df: pd.DataFrame,
     stats['trades_dropped_no_nbbo'] = initial_len - len(merged)
     stats['nbbo_coverage_pct'] = (len(merged) / stats['trades_before_merge'] * 100) if stats['trades_before_merge'] > 0 else 0.0
     
-    # Compute microstructure flags if configured
+    # Compute microstructure flags
     if config.get('compute_microstructure_flags', True) and len(merged) > 0:
         tolerance = config.get('at_bid_ask_tolerance', 0.0001)
         merged['at_bid'] = (abs(merged['price'] - merged['nbb']) <= tolerance).astype(int)
@@ -466,7 +458,7 @@ def finalize_schema(df: pd.DataFrame, config: dict) -> pd.DataFrame:
             if col in df.columns:
                 df[col] = df[col].astype('category')
     
-    # Convert to float32/int32 for space efficiency
+    # Convert to float32/int32 
     float_dtype = config['output']['float_dtype']
     int_dtype = config['output']['int_dtype']
     
@@ -552,7 +544,7 @@ def process_single_file(csv_path: Path, codebook: pd.DataFrame, config: dict) ->
     unknown_codes = set()
     
     try:
-        # Extract date from filename (e.g., "CCL_10-2-25.csv" -> "10-2-25")
+        # Extract date from filename
         date_str = csv_path.stem.split('_', 1)[1]
         ticker = csv_path.parent.name
         
@@ -687,7 +679,7 @@ def main():
     
     logger.info(f"Wrote metadata to {output_dir / 'metadata.parquet'}")
     
-    # Print summary statistics
+    # summary statistics
     print("\n" + "=" * 80)
     print("SUMMARY")
     print("=" * 80)
@@ -721,14 +713,14 @@ def main():
         high_crossed = success_df[success_df['crossed_quotes_pct'] > max_crossed]
         
         if len(low_coverage) > 0:
-            print(f"  ⚠ WARNING: {len(low_coverage)} files with NBBO coverage < {min_coverage}%")
+            print(f"  WARNING: {len(low_coverage)} files with NBBO coverage < {min_coverage}%")
             for _, row in low_coverage.iterrows():
                 print(f"    - {row['ticker']} {row['date']}: {row['nbbo_coverage_pct']:.2f}%")
         else:
             print(f"  [OK] All files meet NBBO coverage threshold (>{min_coverage}%)")
         
         if len(high_crossed) > 0:
-            print(f"  ⚠ WARNING: {len(high_crossed)} files with crossed quotes > {max_crossed}%")
+            print(f"  WARNING: {len(high_crossed)} files with crossed quotes > {max_crossed}%")
             for _, row in high_crossed.iterrows():
                 print(f"    - {row['ticker']} {row['date']}: {row['crossed_quotes_pct']:.3f}%")
         else:
@@ -741,13 +733,13 @@ def main():
                 all_unknown.update(codes_str.split(','))
         
         if all_unknown:
-            print(f"\n⚠ Unknown condition codes encountered: {sorted(all_unknown)}")
+            print(f"\n Unknown condition codes encountered: {sorted(all_unknown)}")
             print(f"  Review and add to config/condition_codes.csv")
         else:
             print(f"\n[OK] No unknown condition codes")
     
     if failed_count > 0:
-        print(f"\n⚠ Failed files:")
+        print(f"\n Failed files:")
         failed_df = metadata_df[metadata_df['status'] == 'failed']
         for _, row in failed_df.iterrows():
             print(f"  - {row['ticker']} {row['date']}: {row.get('error', 'Unknown error')}")

@@ -42,7 +42,6 @@ def load_processed(
 
     for subdir in root.iterdir():
         if not subdir.is_dir():
-            # skip files like cv_metadata.*
             continue
 
         ticker = subdir.name
@@ -53,13 +52,11 @@ def load_processed(
         for pf in parquet_files:
             try:
                 df = pd.read_parquet(pf)
-                # Ensure required time columns exist
                 if 't' in df.columns:
                     df['t'] = pd.to_datetime(df['t'])
                 if 't_end' in df.columns:
                     df['t_end'] = pd.to_datetime(df['t_end'])
                 if 'date' in df.columns:
-                    # Normalize to date (no time component)
                     df['date'] = pd.to_datetime(df['date']).dt.date
                 df['ticker'] = df.get('ticker', ticker)
                 all_frames.append(df)
@@ -71,7 +68,6 @@ def load_processed(
 
     combined = pd.concat(all_frames, ignore_index=True)
 
-    # Keep a tidy subset of core columns if present (do not drop features)
     core_cols = [
         'ticker', 'date', 't', 't_end',
         'open', 'high', 'low', 'close', 'volume', 'vwap',
@@ -80,11 +76,9 @@ def load_processed(
     present_core = [c for c in core_cols if c in combined.columns]
     feature_cols = [c for c in combined.columns if c.startswith('feat_')]
 
-    # Preserve original ordering as much as possible
     ordered_cols = present_core + [c for c in combined.columns if c not in present_core]
     combined = combined[ordered_cols]
 
-    # Move features to the end to keep core grouping first
     non_feature_cols = [c for c in combined.columns if not c.startswith('feat_')]
     combined = combined[non_feature_cols + feature_cols]
 
@@ -132,11 +126,11 @@ def split_train_test_by_day(
         len(df_train), [str(d) for d in train_days], len(df_test), str(test_day)
     )
 
-    # Cast back to Timestamp for consistency
+    # Cast back to Timestam
     df_train['date'] = pd.to_datetime(df_train['date']).dt.date
     df_test['date'] = pd.to_datetime(df_test['date']).dt.date
 
-    # Convert times; ensure timezone preserved if present
+    # Convert times
     if 't' in df_train.columns:
         df_train['t'] = pd.to_datetime(df_train['t'])
     if 't' in df_test.columns:
@@ -146,7 +140,7 @@ def split_train_test_by_day(
     if 't_end' in df_test.columns:
         df_test['t_end'] = pd.to_datetime(df_test['t_end'])
 
-    # Return python date objects for days
+    # Return python date objects
     return df_train, df_test, train_days, test_day
 
 
@@ -176,7 +170,6 @@ def get_feature_matrix(
 
     X_df = df[feature_cols].copy()
 
-    # Identify finite rows
     finite_mask = np.isfinite(X_df.to_numpy()).all(axis=1)
     cleaned = X_df.loc[finite_mask]
 

@@ -41,7 +41,6 @@ def engineer_features(
         logger.warning("No bars provided")
         return df_bars
     
-    # Use default config if not provided
     if config is None:
         config = {
             'vwap_zscore_window': 20,
@@ -65,7 +64,6 @@ def engineer_features(
         min_periods=1
     ).std().shift(1)
     
-    # Z-score (handle division by zero)
     df['feat_vwap_zscore'] = np.where(
         vwap_dist_std > 0,
         df['vwap_distance'] / vwap_dist_std,
@@ -76,7 +74,6 @@ def engineer_features(
     bb_window = config['bollinger_window']
     bb_std_mult = config['bollinger_std']
     
-    # Use shifted rolling stats
     bb_mid = df['close'].rolling(window=bb_window, min_periods=1).mean().shift(1)
     bb_std = df['close'].rolling(window=bb_window, min_periods=1).std().shift(1)
     
@@ -96,14 +93,12 @@ def engineer_features(
     
     # 3. Short-term Momentum
     for window in config['momentum_windows']:
-        # Compute returns over window periods
         returns = df['close'].pct_change(periods=window)
         df[f'feat_momentum_{window}bar'] = returns
     
     # 4. Relative Volume
     vol_window = config['relative_volume_window']
     
-    # Average volume with shift
     avg_volume = df['volume'].rolling(window=vol_window, min_periods=1).mean().shift(1)
     
     df['feat_relative_volume'] = np.where(
@@ -118,7 +113,6 @@ def engineer_features(
     
     market_open = pd.Timestamp('09:35:00').time()
     
-    # Compute seconds since midnight
     seconds_since_midnight = (
         df_times.dt.hour * 3600 + 
         df_times.dt.minute * 60 + 
@@ -127,7 +121,6 @@ def engineer_features(
     
     market_open_seconds = 9 * 3600 + 35 * 60
     
-    # Minutes since market open
     minutes_since_open = (seconds_since_midnight - market_open_seconds) / 60
     
     df['feat_time_of_day'] = (minutes_since_open / 360).clip(0, 1)
@@ -161,10 +154,8 @@ def engineer_features(
             price_range = (context_bars['high'].max() - context_bars['low'].min())
             df.loc[i, 'feat_context_price_range'] = price_range / df.loc[i, 'close']
     
-    # Drop intermediate columns
     df = df.drop(columns=['vwap_distance'], errors='ignore')
     
-    # Convert features to float32
     feature_cols = [col for col in df.columns if col.startswith('feat_')]
     for col in feature_cols:
         df[col] = df[col].astype('float32')
@@ -201,17 +192,14 @@ def validate_features(
     }
     
     for col in feature_cols:
-        # Check for NaN
         nan_count = df[col].isna().sum()
         if nan_count > 0:
             stats['features_with_nan'][col] = nan_count
         
-        # Check for inf
         inf_count = np.isinf(df[col]).sum()
         if inf_count > 0:
             stats['features_with_inf'][col] = inf_count
         
-        # Store range
         if len(df) > 0:
             stats['feature_ranges'][col] = {
                 'min': float(df[col].min()),
@@ -248,7 +236,7 @@ def main():
     config = load_processing_config()
     feature_config = config['features']
     
-    # Load volume bars (from previous test)
+    # Load volume bars
     from volume_bars import build_volume_bars
     
     test_file = "data/clean/CCL/CCL_10-2-25_clean.parquet"

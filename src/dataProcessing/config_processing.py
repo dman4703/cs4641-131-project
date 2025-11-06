@@ -34,8 +34,6 @@ def compute_volume_thresholds(metadata_path: str = "data/clean/metadata.parquet"
     metadata_df = metadata_df[metadata_df['status'] == 'success'].copy()
     
     # Compute daily volume per ticker-day from final_rows (trades)
-    # Note: final_rows is the number of trades, not volume
-    # We need to load the actual parquet files to get volume
     
     logger.info("Computing volume thresholds from cleaned data...")
     
@@ -58,7 +56,6 @@ def compute_volume_thresholds(metadata_path: str = "data/clean/metadata.parquet"
             # Compute median daily volume
             median_daily_vol = pd.Series(daily_volumes).median()
             
-            # Target 600 bars/day
             threshold = median_daily_vol / 600
             
             # Round to nearest 100
@@ -129,7 +126,6 @@ def create_processing_config(
         }
     }
     
-    # Compute config hash for reproducibility
     config_str = yaml.dump(config, sort_keys=True)
     config_hash = hashlib.md5(config_str.encode()).hexdigest()
     config['config_hash'] = config_hash

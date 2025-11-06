@@ -6,7 +6,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 EXCEL_DIR = Path(r"C:\Users\doqui\OneDrive\Documents\cs4641-131-project\data\excel")
 OUTPUT_ROOT = Path(r"C:\Users\doqui\OneDrive\Documents\cs4641-131-project\data\raw")
 
-# Only do these dates (by filename prefix). Example: "10_6_25_tickDataStatic.xlsx"
+# Only do these dates (by filename prefix)
 TARGET_PREFIXES = ("10_6_", "10_7_", "10_8_")
 
 def process_excel_file(excel_path: Path, output_root: Path) -> str:
@@ -26,7 +26,6 @@ def process_excel_file(excel_path: Path, output_root: Path) -> str:
     skipped = 0
 
     try:
-        # Open once; iterate sheets
         with pd.ExcelFile(excel_path, engine="openpyxl") as xls:
             for sheet_name in xls.sheet_names:
                 ticker = sheet_name.split()[0]

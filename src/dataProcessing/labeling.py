@@ -58,7 +58,7 @@ def triple_barrier_labels(
     # Compute 1-bar returns
     df['ret_1'] = df['close'].pct_change()
     
-    # Compute exponentially weighted volatility (shifted to avoid look-ahead)
+    # Compute exponentially weighted volatility
     ewm_std = df['ret_1'].ewm(halflife=ewm_halflife, min_periods=1).std().shift(1)
     
     # Fill first values with expanding std
@@ -78,23 +78,21 @@ def triple_barrier_labels(
     
     for i in range(len(df)):
         # Get bar entry point
-        t_entry = df.loc[i, 't_end']  # Use bar end time as entry
+        t_entry = df.loc[i, 't_end']
         p0 = df.loc[i, 'close']
         vol = df.loc[i, 'ewm_std']
         
         # Time barrier
         t_time_barrier = t_entry + pd.Timedelta(minutes=time_barrier_minutes)
         
-        # Compute price barriers (volatility-scaled)
+        # Compute price barriers
         if vol > 0:
             upper_barrier = p0 * (1 + k * vol)
             lower_barrier = p0 * (1 - k * vol)
         else:
-            # Fallback to small fixed barrier if volatility is zero
             upper_barrier = p0 * 1.005  # 0.5%
             lower_barrier = p0 * 0.995
         
-        # Scan forward to find which barrier is hit first
         label_assigned = False
         
         for j in range(i + 1, len(df)):
@@ -104,7 +102,6 @@ def triple_barrier_labels(
             
             # Check if we've exceeded time barrier
             if bar_time >= t_time_barrier:
-                # Time barrier hit
                 df.loc[i, 'label'] = 0
                 df.loc[i, 'label_t_end'] = t_time_barrier
                 df.loc[i, 'label_holding_period_seconds'] = (
@@ -139,7 +136,6 @@ def triple_barrier_labels(
         if label_assigned:
             labeled_count += 1
     
-    # Drop temporary columns
     df = df.drop(columns=['ret_1'], errors='ignore')
     
     # Summary statistics
@@ -190,15 +186,12 @@ def validate_labels(
     }
     
     if 'label_barrier_hit' in df.columns:
-        # Count labeled vs unlabeled
         labeled_mask = df['label_barrier_hit'].isin(['upper', 'lower', 'time'])
         stats['labeled_bars'] = labeled_mask.sum()
         stats['unlabeled_bars'] = (~labeled_mask).sum()
         
-        # Label distribution
         stats['label_distribution'] = df['label'].value_counts().to_dict()
         
-        # Barrier hit distribution
         stats['barrier_hit_distribution'] = df['label_barrier_hit'].value_counts().to_dict()
         
         # Holding period statistics

@@ -62,7 +62,7 @@ def test_single_file():
             print(f"  Processing time: {metadata['processing_time_seconds']:.2f}s")
             
             if metadata['unknown_cond_codes']:
-                print(f"  ⚠ Unknown codes: {metadata['unknown_cond_codes']}")
+                print(f"  Unknown codes: {metadata['unknown_cond_codes']}")
             
             # Validate output file
             output_path = Path(metadata['output_path'])

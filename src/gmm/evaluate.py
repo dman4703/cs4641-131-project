@@ -100,11 +100,9 @@ def evaluate_gmm(
     _ensure_dir(out_dir)
 
     cand_cols = ["ticker", "date", "t", "t_end", "gmm_loglik", "gmm_is_candidate", "gmm_component"]
-    # Include label if present
     if "label" in tr.columns:
         cand_cols.append("label")
 
-    # Include a subset of features for RF if requested
     feature_cols = feature_names if feature_names is not None else [c for c in tr.columns if c.startswith("feat_")]
     cand_cols_extended = cand_cols + [c for c in feature_cols if c in tr.columns]
 

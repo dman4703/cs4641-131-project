@@ -74,7 +74,6 @@ def process_single_file(
         metadata['n_bars'] = len(df_bars)
         metadata['volume_threshold'] = volume_threshold
         
-        # Validate bars
         is_valid, bar_stats = validate_bars(df_bars, logger)
         if not is_valid:
             logger.warning(f"  Bar validation failed: {bar_stats}")
@@ -126,7 +125,6 @@ def process_single_file(
         metadata['output_path'] = str(output_file)
         metadata['file_size_mb'] = output_file.stat().st_size / (1024 * 1024)
         
-        # Processing time
         processing_time = time.time() - start_time
         metadata['processing_time_seconds'] = processing_time
         metadata['status'] = 'success'
@@ -187,7 +185,7 @@ def run_pipeline(
         parquet_files = list(ticker_dir.glob("*_clean.parquet"))
         
         for file in parquet_files:
-            # Extract date from filename: CCL_10-2-25_clean.parquet -> 10-2-25
+            # Extract date from filename
             date_str = file.stem.replace(f"{ticker}_", "").replace("_clean", "")
             files_to_process.append((ticker, date_str))
     

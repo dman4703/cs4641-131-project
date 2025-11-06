@@ -128,7 +128,7 @@ def tune_and_train_gmm(
                 "train_aic": train_aic,
             })
 
-    # Sort results for reporting (not used for selection): higher CV, then lower BIC
+    # Sort results
     def sort_key(item: Dict) -> Tuple:
         bic = item.get("train_bic", np.inf)
         return (item.get("cv_mean_loglik", -np.inf), -np.inf if np.isnan(bic) else -bic)
@@ -143,7 +143,7 @@ def tune_and_train_gmm(
         best = grid_results_sorted[0]
     else:
         best_cv = max(r["cv_mean_loglik"] for r in valid_entries)
-        # Use std from the model(s) achieving best CV; fallback to 0.0 if unavailable
+        # Use std from the model achieving best CV
         std_candidates = [r.get("cv_std_loglik", np.nan) for r in valid_entries if r["cv_mean_loglik"] == best_cv]
         best_cv_std = float(std_candidates[0]) if std_candidates and not np.isnan(std_candidates[0]) else 0.0
 
@@ -152,12 +152,11 @@ def tune_and_train_gmm(
             if r["cv_mean_loglik"] >= best_cv - best_cv_std
         ]
 
-        # Among candidates, pick the one with the lowest BIC (ignore NaN BICs if possible)
+        # pick the one with the lowest BIC
         with_bic = [r for r in within_one_std if not np.isnan(r.get("train_bic", np.nan))]
         if with_bic:
             best = min(with_bic, key=lambda r: r["train_bic"]) 
         else:
-            # Fallback to the highest CV if BICs are not available
             best = max(within_one_std, key=lambda r: r["cv_mean_loglik"]) if within_one_std else grid_results_sorted[0]
 
         logger.info(
