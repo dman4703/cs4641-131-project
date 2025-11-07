@@ -157,12 +157,12 @@
 
     <h3>Dataset Description</h3>
     <p>
-        The raw dataset is composed of high‑frequency tick data for 20 liquid U.S. equities, selected from the S&amp;P&nbsp;500 
+        The raw dataset is composed of tick data for 20 liquid U.S. equities, selected from the S&amp;P&nbsp;500 
         using price, liquidity and volatility screens. Data were collected over five trading days (October 2, 3, 6, 7 
         and 8 of 2025) during regular trading hours, excluding the opening and closing five minutes. Each day's file 
-        contains millisecond‑timestamped trade prints and quote updates recorded from the Bloomberg Terminal. 
-        In total the raw universe spans approximately 21.4 million tick records; after cleaning and consolidation 
-        (deduplication, NBBO construction and condition‑code filtering) we retain about 1.13 million valid trades 
+        contains millisecond‑timestamped trade prints and quote updates exported from a Bloomberg Terminal. 
+        In total the raw universe spans about 21.4 million tick records; after cleaning and consolidation 
+        (deduplication, NBBO construction and condition‑code filtering) we have about 1.13 million valid trades 
         across all stocks and days.
     </p>
     <p>
@@ -285,10 +285,13 @@
     <p>
         <b>Cleaning</b>. Bloomberg headers and invalid rows were removed, New York timestamps were parsed to UTC, exact repeats were 
         deduplicated, trades were split from quotes and a National Best Bid and Offer (NBBO) was built by forward‑filling quotes 
-        up to 2 seconds. Each trade was merged with the most recent valid NBBO, special condition codes (late reports, auctions, 
-        odd lots, extended hours, etc.) were filtered out, and compressed Parquet files were exported. Quality gates ensured >99% 
-        NBBO coverage, zero negative spreads and chronologically ordered timestamps. Average duplicate removal was roughly 33% of 
-        raw rows and NBBO crossed quotes occurred in less than 1% of cases.
+        up to 2 seconds. The NBBO construction ensures trades are contextualized against the prevailing market allowing the 
+        computation of accurate spreads and assessment of price impact; the 2‑second forward‑fill cap prevents using stale quotes that would 
+        misrepresent market conditions. Each trade was merged with the most recent valid NBBO; special condition codes (late reports, 
+        auctions, odd lots, extended hours, etc.) were filtered out because these irregular trade types do not reflect normal 
+        market liquidity and would introduce bias into our mean‑reversion features. Compressed Parquet files were exported. Quality 
+        gates ensured >99% NBBO coverage, zero negative spreads and chronologically ordered timestamps. Average duplicate removal was 
+        roughly 33% of raw rows and NBBO crossed quotes occurred in less than 1% of cases.
     </p>
     <p>
         <b>Bar Type</b>. To determine whether to use volume or dollar bars, we performed EDA on three representative tickers. By examining per‑second 
@@ -323,11 +326,14 @@
     <img src="./assets/img/determineBar_8_1.png" alt="Volume vs Dollar bar comparison">
     <p class="img-caption">Figure 1: Comparison of volume vs. dollar bar metrics.</p>
     <p>
-        <b>Feature Engineering</b>. From each volume bar we engineered nine features while avoiding look‑ahead bias. These features include a standardized 
-        distance to VWAP, Bollinger‑band position (20‑bar window, 2&nbsp;σ), three‑ and five‑bar 
-        momentum, relative volume compared to a rolling median, normalized time of day, and three context variables summarizing 
-        the past five minutes (bar count, average volume and price range). All rolling statistics are shifted by one bar to ensure 
-        the features do not incorporate the current bar's outcome. The feature distributions are approximately symmetric with 
+        <b>Feature Engineering</b>. From each volume bar we engineered nine features while avoiding look‑ahead bias. These features 
+        best capture mean‑reversion signals: VWAP z‑score and Bollinger position directly measure price 
+        overextension from mean levels, which is the overarching signal for mean reversion. Three‑ and five‑bar momentum quantify short‑term 
+        trend strength that may reverse. Relative volume indicates unusual activity that often precedes reversions. Time of day 
+        accounts for intraday liquidity patterns. The three context variables (bar count, 
+        average volume, and price range over the past five minutes) provide microstructure information about recent market conditions 
+        that affect reversion probability. All rolling statistics are shifted by one bar to ensure the features do not incorporate 
+        the current bar's outcome, strictly preventing look‑ahead bias. The feature distributions are approximately symmetric with 
         moderate tails.
     </p>
     <table>
@@ -352,34 +358,46 @@
     <img src="./assets/img/dataEDA_10_0.png" alt="Feature distributions">
     <p class="img-caption">Figure 2: Distribution of the nine engineered features.</p>
     <p>
-        <b>Labeling</b>. Labels are derived using the triple‑barrier method with volatility‑scaled price barriers and a 20‑minute time horizon. We 
+        <b>Labeling</b>. Labels are derived using the triple‑barrier method with volatility‑scaled price barriers and a 20‑minute time horizon. 
+        This approach is preferred over fixed‑price targets or fixed‑time horizons because it adapts to changing volatility regimes 
+        and realistically models how traders exit positions—either hitting a profit target, hitting a stop loss, or timing out. We 
         compute an exponentially‑weighted rolling standard deviation of returns (halflife = 50 bars) and set upper and lower 
-        barriers at ±1× this volatility from the entry price. A bar receives a label of <code>+1</code> if the upper barrier is hit 
-        first, <code>-1</code> if the lower barrier is hit, or <code>0</code> if the time barrier elapses without either price 
-        barrier being breached. Across our processed dataset, up and down labels are roughly balanced while neutral events are rare. 
-        Holding periods cluster around 30–100 seconds.
+        barriers at ±1× this volatility from the entry price, ensuring that profit/loss thresholds scale with recent market conditions. 
+        A bar receives a label of <code>+1</code> if the upper barrier is hit first, <code>-1</code> if the lower barrier is hit, 
+        or <code>0</code> if the time barrier elapses without either price barrier being breached. This reduces path‑dependent 
+        labeling bias and produces more realistic training signals than pure forward returns. Across our processed dataset, up and down 
+        labels are roughly balanced while neutral events are rare. Holding periods cluster around 30–100 seconds.
     </p>
     <img src="./assets/img/dataEDA_6_0.png" alt="Label distribution">
-    <p class="img-caption">Figure 3: Triple-barrier label distribution.</p>
+    <p class="img-caption">Figure 3: Triple-barrier label distribution across a data sample.</p>
     <p>
-        <b>Cross-Validation</b>. Finally, we partitioned the data using purged, embargoed cross‑validation. In a leave‑one‑day‑out 
-        (LODO) scheme, we hold out one trading day for validation and train on the remaining days. We purge any training samples 
-        whose entry or exit windows overlap the validation period and enforce a 20‑minute embargo after the validation cut‑off to 
-        prevent information leakage through serial correlation. This yields five folds for the five trading days; in each fold about 
-        7,000–10,000 bars are reserved for validation while the rest form the training set.
+        <b>Cross-Validation</b>. Finally, we partitioned the data using purged, embargoed cross‑validation. Traditional random splits 
+        are inappropriate for financial time‑series because both features and labels exhibit serial correlation: a bar's outcome can 
+        influence nearby bars through autocorrelation, shared volatility regimes, and overlapping triple‑barrier windows. In a 
+        leave‑one‑day‑out (LODO) scheme, we hold out one trading day for testing and train on the remaining days. We purge any 
+        training samples whose entry or exit windows overlap the validation period and enforce a 20‑minute embargo after the validation 
+        cut‑off to prevent information leakage. This approach ensures that validation performance reflects 
+        out‑of‑sample generalization rather than memorization of temporally adjacent patterns. This yields five folds for the 
+        five trading days; in each fold about 7,000–10,000 bars are reserved for validation while the rest form the training set.
     </p>
 
     <h3>Models</h3>
 
     <h4>GMM: Unsupervised Overextension Detector</h4>
     <p>
-        To automatically identify overextended price moves without supervision, we fit a Gaussian Mixture Model (GMM) to the 
-        nine‑dimensional feature vectors constructed from the volume bars. A GMM models the data as a weighted sum of <em>k</em> 
-        multivariate Gaussian <em>components</em> (clusters), where each component represents a distinct pattern in the feature 
-        space. We test 8 to 15 components to balance model flexibility against complexity. The GMM assigns each point a probability density: 
-        "normal" events receive high density (high probability) under the learned distribution, while low‑probability outliers correspond 
-        to unusual, potentially overextended situations. We prefer GMMs over simple z‑scores because they capture correlations and 
-        multimodality in the feature space and adapt to regime shifts by blending multiple covariance structures [4].
+        To identify overextended price moves without supervision, we fit a GMM to the 
+        nine‑dimensional feature vectors constructed from the volume bars. We chose an unsupervised approach because labeling 
+        "overextension" directly is subjective and would require hindsight bias; instead, we let the model learn the natural 
+        distribution of feature patterns and flag anomalies. A GMM models the data as a weighted sum of k 
+        components, where each component represents a distinct market regime or pattern in the 
+        feature space. We test 8 to 15 components to balance model flexibility against complexity. The GMM assigns each point a 
+        probability density: "normal" events receive high probability under the learned distribution, while 
+        low‑probability outliers in the tails correspond to unusual, potentially overextended situations worthy of further analysis. 
+        We prefer GMMs over simpler alternatives (e.g., univariate z‑scores or Isolation Forest) for several reasons: GMMs 
+        capture correlations between features (e.g., VWAP z‑score and Bollinger position often move together), 
+        they model multimodality in the feature space, allowing different "normal" regimes to coexist, and 
+        they adapt to regime shifts by blending multiple covariance structures rather than assuming a single Gaussian. 
+        This provides interpretable anomaly scores and handles the non‑stationary nature of intraday trading data.
     </p>
     <p>
         The model is trained on four of the five trading days (October 2, 3, 6, 7) and tested on the remaining day (October 8). 
@@ -435,23 +453,31 @@
     <h3>GMM: Unsupervised Overextension Detector</h3>
     <p>
         <b>Model Selection and Information Criteria</b>. We evaluated GMM configurations with 8 to 15 components and two covariance types 
-        (full and diagonal) using day‑level LODO cross‑validation. Model selection was guided by two constrains: first, we identify models 
+        (full and diagonal) using day‑level LODO cross‑validation. Model selection was guided by two constraints: first, we identify models 
         within one standard deviation of the best cross‑validated log‑likelihood; second, among these candidates we select the configuration 
-        with the lowest Bayesian Information Criterion (BIC). This prevents overfitting to validation noise while favoring simpler models when performance is comparable.
+        with the lowest Bayesian Information Criterion (BIC). These metrics are particularly well‑suited for unsupervised GMM evaluation: 
+        unlike supervised metrics (accuracy, F1), they do not require ground‑truth labels and instead measure how well the model explains 
+        the observed data distribution. This prevents overfitting to validation noise while favoring simpler models 
+        when performance is comparable, ensuring the chosen GMM generalizes to new trading days.
     </p>
     <p>
         <b>Log-Likelihood</b>. In an unsupervised setting without ground-truth labels, 
-        log‑likelihood measures how well the model explains the observed data distribution. It represents the average log‑probability 
-        that the fitted GMM assigns to each data point; higher (less negative) values indicate the model assigns higher probability to 
-        the observed feature patterns, meaning it better captures the underlying structure. We evaluate log‑likelihood on held‑out validation 
-        days to assess generalization: if a model fits the training distribution well but produces much lower log‑likelihood on validation 
-        data, it has likely overfit. Our cross‑validation strategy ensures that the selected model generalizes across different trading days.
+        log‑likelihood is the primary metric for evaluating how well the GMM explains the observed data distribution. It represents the 
+        average log‑probability that the fitted GMM assigns to each data point. Higher (less negative) values indicate the model 
+        assigns higher probability to the observed feature patterns, meaning it better captures the underlying structure. For example, 
+        a mean log‑likelihood of –6.8 is better than –8.0 because the former indicates the model finds the data more probable under its 
+        learned distribution. We evaluate log‑likelihood on held‑out validation days to assess generalization: if a model fits the training 
+        distribution well but produces lower log‑likelihood on validation data, it has likely overfit. Conversely, similar train and test log‑likelihoods 
+        confirm that the model has learned generalizable patterns.
     </p>
     <p>
         Among the 16 configurations evaluated, k=15 full covariance achieved the best CV log‑likelihood (–7.15), but k=12 full covariance was selected due to its 
-        substantially lower BIC (523,136) compared to k=15 (530,430), despite a marginal CV difference of only 0.10. AIC and BIC balance 
-        goodness‑of‑fit against model complexity, with BIC applying a stronger penalty for additional parameters. The 7,000‑point BIC 
-        improvement of k=12 over k=15 indicates that three fewer components provide a better trade‑off. Note that AIC and BIC values 
+        substantially lower BIC (523,136) compared to k=15 (530,430), despite a marginal CV difference of only 0.10. AIC (Akaike Information 
+        Criterion) and BIC are information‑theoretic metrics that balance goodness‑of‑fit against model 
+        complexity; they are ideal for unsupervised GMM selection because they penalize overly complex models that may fit noise rather than 
+        signal. BIC applies a stronger penalty than AIC for additional parameters, making it more conservative. Lower AIC and BIC 
+        values indicate better models: the 7,000‑point BIC improvement of k=12 over k=15 indicates that three fewer components provide a 
+        better parsimony trade‑off—k=15's slight CV advantage does not justify its added complexity. Note that AIC and BIC values 
         scale linearly with sample size (n = 37,793), so absolute magnitudes in the hundreds of thousands are expected; what matters for 
         model comparison is the relative difference between candidates. The diagonal‑covariance models consistently performed worse, 
         suggesting that feature correlations (e.g., between VWAP z-score and Bollinger position) are important for accurately modeling 
