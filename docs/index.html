@@ -442,7 +442,52 @@
     <p class="img-caption">Figure 4: GMM model selection via LODO cross-validation showing full covariance models consistently outperform diagonal covariance.</p>
 
     <h4>Supervised Opportunity Classifier</h4>
-    <p>Random Forest trained on the overextension candidates; it outputs the probability of reversion.</p>
+    <p>
+        Once the GMM flags overextension candidates, we need to distinguish which of these anomalies are likely to 
+        revert profitably versus those that represent genuine regime shifts or continuation moves. For this task we 
+        train a supervised Random Forest binary classifier on the GMM‑flagged subset of bars (5th percentile threshold;
+         2,347 samples across all days). The target is binary: label = +1 (profitable mean reversion, 
+        upper barrier hit first) versus label ∈ {−1, 0} (no profitable reversion). This reframes the problem from 
+        detecting anomalies to predicting reversion success.
+    </p>
+    <p>
+        We chose Random Forest over alternative classifiers for several reasons. First, Random Forests handle 
+        nonlinear, correlated features naturally without requiring explicit feature transformations or regularization. 
+        Our nine features likely interact in complex ways that tree ensembles can capture. Second, Random Forests are robust to 
+        outliers and require minimal hyperparameter tuning compared to gradient boosting or neural networks, making 
+        them a practical baseline for this moderately sized dataset. Third, they provide interpretable feature 
+        importances, which helps diagnose which signals drive reversion predictions. Finally, 
+        the probabilistic outputs can be directly used for risk sizing and thresholding 
+        in downstream trading logic.
+    </p>
+    <p>
+        The model is trained on four days (October 2, 3, 6, 7; 1,890 samples) and tested on the fifth day 
+        (October 8; 457 samples). Class balance is approximately 50/50 for both train and test splits. We tune 
+        hyperparameters via day‑level LODO cross‑validation on the training set, searching over number of trees 
+        (200 vs. 400), maximum depth (None vs. 10), minimum samples per leaf (5 vs. 10), and feature sampling 
+        strategy (sqrt vs. all features). The configuration is selected by maximizing mean F1 score across the 
+        four LODO folds. The winning configuration uses 400 trees, unrestricted depth, minimum 5 samples per leaf, 
+        and considers all features at each split.
+    </p>
+    <table>
+        <caption><strong>Random Forest Configuration</strong></caption>
+        <thead>
+            <tr>
+                <th>Parameter</th><th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Number of estimators</td><td>400</td></tr>
+            <tr><td>Maximum depth</td><td>None (unrestricted)</td></tr>
+            <tr><td>Min samples per leaf</td><td>5</td></tr>
+            <tr><td>Max features per split</td><td>All (9 features)</td></tr>
+            <tr><td>Training samples</td><td>1,890</td></tr>
+            <tr><td>Test samples</td><td>457</td></tr>
+            <tr><td>Feature dimensionality</td><td>9</td></tr>
+            <tr><td>Train class balance</td><td>50.9% positive, 49.1% negative</td></tr>
+            <tr><td>Test class balance</td><td>51.4% positive, 48.6% negative</td></tr>
+        </tbody>
+    </table>
 
     <h4>Supervised Exit Model</h4>
     <p>Gradient‑boosted trees (trained on the events predicted to revert with high probability) to predict τ‑quantiles; we will use 
@@ -555,7 +600,7 @@
         instead, the flags simply identify potential mean‑reversion opportunities for further screening.
     </p>
 
-    <div class="slideshow-container">
+    <div class="slideshow-container" id="slideshow-gmm">
         <div class="slide active">
             <img src="./assets/img/gmm_16_5.png" alt="GMM log-likelihood distributions">
             <div class="slide-caption">Figure 5a: Overlapping log-likelihood distributions for train and test sets with 5th percentile threshold marked.</div>
@@ -572,13 +617,13 @@
             <img src="./assets/img/gmm_16_6.png" alt="Feature space scatter">
             <div class="slide-caption">Figure 5d: VWAP z-score vs. Bollinger position scatter plot with flagged events.</div>
         </div>
-        <button class="slideshow-nav prev" onclick="changeSlide(-1)">&#10094;</button>
-        <button class="slideshow-nav next" onclick="changeSlide(1)">&#10095;</button>
+        <button class="slideshow-nav prev" onclick="changeSlide(this, -1)">&#10094;</button>
+        <button class="slideshow-nav next" onclick="changeSlide(this, 1)">&#10095;</button>
         <div class="dots-container">
-            <span class="dot active" onclick="currentSlide(0)"></span>
-            <span class="dot" onclick="currentSlide(1)"></span>
-            <span class="dot" onclick="currentSlide(2)"></span>
-            <span class="dot" onclick="currentSlide(3)"></span>
+            <span class="dot active" onclick="currentSlide(this, 0)"></span>
+            <span class="dot" onclick="currentSlide(this, 1)"></span>
+            <span class="dot" onclick="currentSlide(this, 2)"></span>
+            <span class="dot" onclick="currentSlide(this, 3)"></span>
         </div>
     </div>
 
@@ -593,7 +638,167 @@
     </p>
 
     <h3>Supervised Opportunity Classifier</h3>
-    <p>TBD. Accuracy, Precision, Recall, F1, ROC-AUC, Confusion Matrix.</p>
+    <p>
+        <b>Cross-Validation and Hyperparameter Selection</b>. We tuned 4 hyperparameters using 
+        day‑level leave‑one‑day‑out (LODO) cross‑validation on the four training days. Each fold held out one day 
+        for validation while training on the remaining three days. The selected model (400 trees, 
+        no depth limit, 5 samples per leaf, all features) achieved a mean CV F1 of 50.9% and mean ROC‑AUC of 52.8%, 
+        marginally outperforming alternatives. All tested configurations produced very similar performance 
+        (F1 ranging from 47.4% to 50.9%), suggesting that the prediction task is inherently difficult and that 
+        hyperparameter choices have limited impact. 
+    </p>
+    <!-- <table>
+        <caption><strong>Random Forest Hyperparameter Tuning (Top 5 by Mean F1)</strong></caption>
+        <thead>
+            <tr>
+                <th>n_estimators</th><th>max_depth</th><th>min_samples_leaf</th><th>max_features</th>
+                <th>Mean Accuracy</th><th>Mean Precision</th><th>Mean Recall</th><th>Mean F1</th><th>Mean ROC-AUC</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>400</td><td>None</td><td>5</td><td>All</td><td>0.512</td><td>0.531</td><td>0.512</td><td>0.509</td><td>0.528</td></tr>
+            <tr><td>400</td><td>10</td><td>5</td><td>All</td><td>0.508</td><td>0.530</td><td>0.520</td><td>0.507</td><td>0.527</td></tr>
+            <tr><td>200</td><td>10</td><td>5</td><td>All</td><td>0.505</td><td>0.527</td><td>0.509</td><td>0.502</td><td>0.522</td></tr>
+            <tr><td>200</td><td>None</td><td>5</td><td>sqrt</td><td>0.504</td><td>0.524</td><td>0.503</td><td>0.499</td><td>0.524</td></tr>
+            <tr><td>400</td><td>10</td><td>10</td><td>All</td><td>0.505</td><td>0.523</td><td>0.518</td><td>0.498</td><td>0.528</td></tr>
+        </tbody>
+    </table> -->
+    <p>
+        Per‑fold metrics for the best configuration reveal moderate variability across validation days: accuracy 
+        ranged from 49.6% to 53.2%, recall from 35.1% to 67.3%, and F1 from 43.3% to 55.1%. This heterogeneity 
+        suggests that reversion predictability varies by day, potentially due to differing intraday volatility regimes, 
+        news events, or liquidity conditions. The standard deviations 
+        (accuracy ±1.5%, recall ±13.8%, F1 ±5.6%) confirm that day‑to‑day performance is unstable.
+    </p>
+    <table>
+        <caption><strong>LODO CV Metrics by Validation Day</strong></caption>
+        <thead>
+            <tr>
+                <th>Validation Day</th><th>n_val</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>ROC-AUC</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Oct 2</td><td>707</td><td>0.496</td><td>0.564</td><td>0.351</td><td>0.433</td><td>0.510</td></tr>
+            <tr><td>Oct 3</td><td>268</td><td>0.511</td><td>0.550</td><td>0.462</td><td>0.502</td><td>0.534</td></tr>
+            <tr><td>Oct 6</td><td>361</td><td>0.532</td><td>0.542</td><td>0.562</td><td>0.552</td><td>0.539</td></tr>
+            <tr><td>Oct 7</td><td>554</td><td>0.509</td><td>0.466</td><td>0.673</td><td>0.551</td><td>0.529</td></tr>
+            <tr><td><b>Mean ± Std</b></td><td>—</td><td>0.512 ± 0.015</td><td>0.531 ± 0.044</td><td>0.512 ± 0.138</td><td>0.509 ± 0.056</td><td>0.528 ± 0.013</td></tr>
+        </tbody>
+    </table>
+    <p>
+        <b>Test Performance</b>. On the test day, the Random Forest achieved an accuracy 
+        of 52.5%, precision of 54.7%, recall of 44.3%, F1 of 48.9%, and ROC‑AUC of 53.6%. These metrics are 
+        consistent with the cross‑validation results, confirming that the model generalizes to unseen data without 
+        significant overfitting. However, the absolute performance is weak: an ROC‑AUC of 53.6% indicates the model 
+        ranks profitable reversions only modestly better than random chance.
+    </p>
+    <table>
+        <caption><strong>Test Day Performance</strong></caption>
+        <thead>
+            <tr>
+                <th>Metric</th><th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Accuracy</td><td>52.5%</td></tr>
+            <tr><td>Precision</td><td>54.7%</td></tr>
+            <tr><td>Recall</td><td>44.3%</td></tr>
+            <tr><td>F1 Score</td><td>48.9%</td></tr>
+            <tr><td>ROC-AUC</td><td>53.6%</td></tr>
+            <tr><td>True Negatives</td><td>136</td></tr>
+            <tr><td>False Positives</td><td>86</td></tr>
+            <tr><td>False Negatives</td><td>131</td></tr>
+            <tr><td>True Positives</td><td>104</td></tr>
+        </tbody>
+    </table>
+    <p>
+        The ROC and precision–recall curves illustrate the limited discriminatory power. The ROC curve hugs the diagonal pretty well, 
+        reflecting the weak AUC. The precision–recall curve shows that at very high probability thresholds (top‑left corner) the model can achieve near‑perfect precision, 
+        but this corresponds to extremely low recall - only a handful of trades would be executed. As the threshold 
+        is relaxed, precision quickly drops to the 0.50–0.55 range while recall increases. This tradeoff is 
+        characteristic of a weak classifier: there is no "sweet spot" where both precision and recall are high.
+    </p>
+    <img src="./assets/img/randomForest_6_0.png" alt="ROC and Precision-Recall curves">
+    <p class="img-caption">Figure 6: ROC and precision–recall curves on the held-out test day. The modest separation from baseline indicates weak but non-zero predictive power.</p>
+    <p>
+        <b>Feature Importances</b>. Gini‑based feature importances reveal that <code>feat_time_of_day</code> 
+        is the single most influential variable (15.4%), indicating that when in the trading session an overextension 
+        occurs strongly affects reversion likelihood. The next most 
+        important features are <code>feat_context_price_range</code> (13.5%) and <code>feat_context_avg_volume</code> 
+        (12.5%), which capture recent intraday volatility and local trading activity. Their prominence suggests that 
+        reversions are more predictable when the candidate occurs within specific short‑horizon volatility and liquidity 
+        regimes. Core mean‑reversion signals—<code>feat_vwap_zscore</code> (11.1%) and <code>feat_bollinger_position</code> 
+        (11.0%)—rank fourth and fifth, reflecting how far price is from recent value and band extremes. Secondary 
+        contributors include <code>feat_relative_volume</code> (10.8%), short‑horizon momentum measures 
+        (<code>feat_momentum_5bar</code> 9.3%, <code>feat_momentum_3bar</code> 8.5%), and <code>feat_context_bar_count</code> 
+        (7.9%). The relatively flat importance distribution (no single feature dominates beyond 16%) suggests that 
+        reversion prediction requires a mix of time‑of‑day structure, local volatility/volume context, and 
+        distance‑from‑value indicators rather than relying on any one strong signal.
+    </p>
+    <img src="./assets/img/randomForest_7_2.png" alt="Feature importances">
+    <p class="img-caption">Figure 7: Gini-based feature importances. Time-of-day, local volatility context, and price positioning signals are most influential.</p>
+    <p>
+        <b>Calibration, Probability Distributions, and Threshold Analysis</b>. Figure 8a shows the model is reasonably 
+        well‑calibrated (quantile bins somewhat near the diagonal) with probabilities clustering between 0.15–0.70. The 
+        confusion matrix reveals roughly balanced predictions across all four cells at the 0.5 threshold. 
+        Figure 8b visualizes substantial overlap between class probability distributions: the no‑reversion class has mean 
+        0.451 while the reversion class has mean 0.474, confirming weak separation and 
+        explaining the near‑uniform confusion matrix. Figure 8c explores threshold tradeoffs, revealing the optimal F1 (0.679) 
+        occurs at an impractically low threshold of 0.02 (98.3% recall, 51.9% precision); at the default 0.5 threshold, 
+        performance is more balanced but still weak (54.7% precision, 44.3% recall, 48.9% F1). Accuracy hovers around 50–52.5% 
+        across all thresholds, barely above random guessing. The analysis reveals no operating point achieves both high precision 
+        and high recall, confirming the model lacks strong predictive signal and requires better features, more data, or 
+        alternative approaches.
+    </p>
+
+    <div class="slideshow-container" id="slideshow-rf">
+        <div class="slide active">
+            <img src="./assets/img/randomForest_8_0.png" alt="Calibration curve and confusion matrix">
+            <div class="slide-caption">Figure 8a: Calibration curve and confusion matrix on test day. The model is well-calibrated but weakly discriminative.</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/randomForest_9_1.png" alt="Predicted probability distributions by class">
+            <div class="slide-caption">Figure 8b: Predicted probability distributions by class showing substantial overlap between reversion and non-reversion events.</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/randomForest_10_0.png" alt="Metrics vs decision threshold">
+            <div class="slide-caption">Figure 8c: Precision, recall, F1, and accuracy vs. decision threshold. No operating point achieves both high precision and high recall.</div>
+        </div>
+        <button class="slideshow-nav prev" onclick="changeSlide(this, -1)">&#10094;</button>
+        <button class="slideshow-nav next" onclick="changeSlide(this, 1)">&#10095;</button>
+        <div class="dots-container">
+            <span class="dot active" onclick="currentSlide(this, 0)"></span>
+            <span class="dot" onclick="currentSlide(this, 1)"></span>
+            <span class="dot" onclick="currentSlide(this, 2)"></span>
+        </div>
+    </div>
+    <p>
+        <b>Why Does the Model Perform Weakly?</b> Several factors likely explain the limited predictive power. 
+        First, the sample size is small: with only 1,890 training samples and 457 test samples (after GMM filtering 
+        to 5%), there is insufficient data for the Random Forest to learn robust decision boundaries, especially 
+        given the nine‑dimensional feature space and high noise in intraday price movements. Second, the binary 
+        target (profitable reversion vs. no profitable reversion) may be inherently noisy because mean reversion 
+        is a probabilistic phenomenon influenced by unobserved factors such as order flow, latent news, and 
+        microstructure effects not captured by our features. Third, the features themselves may lack sufficient 
+        signal: while VWAP z‑score and Bollinger position measure overextension, they do not incorporate directional 
+        information about order book imbalance, bid‑ask dynamics, or recent trade intensity, all of which may 
+        improve reversion prediction. Fourth, the 5% GMM threshold may flag a too "unique" set of anomalies (some 
+        are genuine overextensions, while others are regime shifts or continuation moves) diluting the supervised 
+        signal.
+    </p>
+    <p>
+        <b>Next Steps and Potential Improvements</b>. To improve the classifier, we could expand the feature set to 
+        include order‑book imbalance, realized volatility, and trade‑level microstructure signals (e.g., signed trade 
+        intensity). We could also explore alternative models: gradient boosting (XGBoost, LightGBM) might better 
+        handle interactions and small sample sizes, and calibrated ensembles  
+        could refine probability estimates. Sequential bootstrap or sample weighting could mitigate label overlap 
+        bias from the triple‑barrier method. Additionally, we could stratify by ticker or volatility regime to train 
+        ticker‑specific or regime‑specific models, acknowledging that reversion dynamics may vary across stocks. 
+        Despite these limitations, the current Random Forest provides a good baseline and its calibrated 
+        probabilities offer a soft signal for downstream exit modeling and risk management. The weak but positive 
+        discriminatory power suggests that the features contain some reversion‑related information, 
+        even if it is insufficient for strong standalone classification.
+    </p>
 
     <h3>Supervised Exit Model</h3>
     <p>TBD. Quantile Loss, Pinball Loss, Backtest profit & loss.</p>
@@ -612,29 +817,29 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Midterm Contributions</th>
+                <th>Final Report Contributions</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>Devon O'Quinn</td>
-                <td>Data Cleaning, Data Preprocessing, Feature Engineering, Data Visualization, <br>Model Coding & Evaluation, Report Writing (Tables, Plots)</td>
+                <td>Random Forest Model Coding & Evaluation, Report Writing (Tables, Plots)</td>
             </tr>
             <tr>
                 <td>Shayali Patel</td>
-                <td>Report Writing (Model Description Section)</td>
+                <td></td>
             </tr>
             <tr>
                 <td>Nicholas Nitsche</td>
-                <td>Report Writing (Results and Discussion Section)</td>
+                <td></td>
             </tr>
             <tr>
                 <td>Julien Perez</td>
-                <td>Report Writing (Dataset Description Section)</td>
+                <td></td>
             </tr>
             <tr>
                 <td>Mutimu Njenga</td>
-                <td>Report Writing (Data Preprocessing Section)</td>
+                <td></td>
             </tr>
         </tbody>
     </table>
@@ -655,26 +860,51 @@
     <p>[7] N. Meinshausen, "Quantile Regression Forests," <em>Journal of Machine Learning Research</em>, vol. 7, pp. 983–999, 2006.</p>
 
     <script>
-        let currentSlideIndex = 0;
+        // Track current slide index for each slideshow
+        const slideshowStates = {};
 
-        function changeSlide(direction) {
-            const slides = document.querySelectorAll('.slide');
-            const dots = document.querySelectorAll('.dot');
-            slides[currentSlideIndex].classList.remove('active');
-            dots[currentSlideIndex].classList.remove('active');
-            currentSlideIndex = (currentSlideIndex + direction + slides.length) % slides.length;
-            slides[currentSlideIndex].classList.add('active');
-            dots[currentSlideIndex].classList.add('active');
+        function changeSlide(element, direction) {
+            const container = element.closest('.slideshow-container');
+            const containerId = container.id;
+            
+            // Initialize state if needed
+            if (!(containerId in slideshowStates)) {
+                slideshowStates[containerId] = 0;
+            }
+            
+            const slides = container.querySelectorAll('.slide');
+            const dots = container.querySelectorAll('.dot');
+            const currentIndex = slideshowStates[containerId];
+            
+            slides[currentIndex].classList.remove('active');
+            dots[currentIndex].classList.remove('active');
+            
+            slideshowStates[containerId] = (currentIndex + direction + slides.length) % slides.length;
+            
+            slides[slideshowStates[containerId]].classList.add('active');
+            dots[slideshowStates[containerId]].classList.add('active');
         }
 
-        function currentSlide(index) {
-            const slides = document.querySelectorAll('.slide');
-            const dots = document.querySelectorAll('.dot');
-            slides[currentSlideIndex].classList.remove('active');
-            dots[currentSlideIndex].classList.remove('active');
-            currentSlideIndex = index;
-            slides[currentSlideIndex].classList.add('active');
-            dots[currentSlideIndex].classList.add('active');
+        function currentSlide(element, index) {
+            const container = element.closest('.slideshow-container');
+            const containerId = container.id;
+            
+            // Initialize state if needed
+            if (!(containerId in slideshowStates)) {
+                slideshowStates[containerId] = 0;
+            }
+            
+            const slides = container.querySelectorAll('.slide');
+            const dots = container.querySelectorAll('.dot');
+            const currentIndex = slideshowStates[containerId];
+            
+            slides[currentIndex].classList.remove('active');
+            dots[currentIndex].classList.remove('active');
+            
+            slideshowStates[containerId] = index;
+            
+            slides[index].classList.add('active');
+            dots[index].classList.add('active');
         }
     </script>
 </body>
