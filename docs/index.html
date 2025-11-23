@@ -323,7 +323,8 @@
             <tr><td>Others</td><td>2,000</td><td>~600</td></tr>
         </tbody>
     </table>
-    <img src="./assets/img/determineBar_8_1.png" alt="Volume vs Dollar bar comparison">
+    <img src="./assets/img/determineBar_8_1.png" alt="Three bar charts compare Volume vs Dollar across INTC, SMCI, FCX on 10-2-25 and 10-3-25. Left: CV similar. 
+    Middle: Dollar shows dramatically higher Fano Factor (more bursty). Right: Zero-activity rates are close; FCX highest (~75–78%), INTC lowest (~55–60%).">
     <p class="img-caption">Figure 1: Comparison of volume vs. dollar bar metrics.</p>
     <p>
         <b>Feature Engineering</b>. From each volume bar we engineered nine features while avoiding look‑ahead bias. These features 
@@ -355,7 +356,8 @@
             <tr><td>Context: price range</td><td>Price range in past 5 minutes</td><td>(max(high) − min(low)) / mean(close)</td></tr>
         </tbody>
     </table>
-    <img src="./assets/img/dataEDA_10_0.png" alt="Feature distributions">
+    <img src="./assets/img/dataEDA_10_0.png" alt="Grid of nine histograms summarizing features: VWAP z-score and Momentum (3/5 bar) roughly normal around zero; Bollinger position centered near zero; Relative volume clustered near 1 
+    with right-tail outliers; time-of-day roughly uniform; context bar count, average volume, and price range strongly right-skewed.">
     <p class="img-caption">Figure 2: Distribution of the nine engineered features.</p>
     <p>
         <b>Labeling</b>. Labels are derived using the triple‑barrier method with volatility‑scaled price barriers and a 20‑minute time horizon. 
@@ -368,7 +370,8 @@
         labeling bias and produces more realistic training signals than pure forward returns. Across our processed dataset, up and down 
         labels are roughly balanced while neutral events are rare. Holding periods cluster around 30–100 seconds.
     </p>
-    <img src="./assets/img/dataEDA_6_0.png" alt="Label distribution">
+    <img src="./assets/img/dataEDA_6_0.png" alt="Two bar charts. Left: labels −1, 0, 1—down and up are nearly equal (~360 each); neutral is rare (~10). 
+    Right: first barrier hit—lower and upper occur most often and are similar; time-out is uncommon (~5).">
     <p class="img-caption">Figure 3: Triple-barrier label distribution across a data sample.</p>
     <p>
         <b>Cross-Validation</b>. Finally, we partitioned the data using purged, embargoed cross‑validation. Traditional random splits 
@@ -438,7 +441,8 @@
         may warrant further analysis by the supervised opportunity classifier. For interpretability we also record the mixture 
         component assignments, which can reveal clusters of feature patterns associated with extremes.
     </p>
-    <img src="./assets/img/gmm_15_0.png" alt="GMM model selection">
+    <img src="./assets/img/gmm_15_0.png" alt="Line chart titled 'GMM model selection (LODO CV)' showing CV mean log-likelihood versus number of components (2–8). 
+    Two lines: cov=full consistently higher than cov=diag; both improve (less negative) as components increase.">
     <p class="img-caption">Figure 4: GMM model selection via LODO cross-validation showing full covariance models consistently outperform diagonal covariance.</p>
 
     <h4>Supervised Opportunity Classifier</h4>
@@ -602,19 +606,23 @@
 
     <div class="slideshow-container" id="slideshow-gmm">
         <div class="slide active">
-            <img src="./assets/img/gmm_16_5.png" alt="GMM log-likelihood distributions">
+            <img src="./assets/img/gmm_16_5.png" alt="Overlapping histograms of GMM log-likelihoods for train (blue) and test (orange). Most mass near 0 with a thin left tail. 
+            A vertical red dashed line around −14 marks the threshold. Title: 'Log-likelihood distributions with threshold.'' Axes: log-likelihood (x), density (y).">
             <div class="slide-caption">Figure 5a: Overlapping log-likelihood distributions for train and test sets with 5th percentile threshold marked.</div>
         </div>
         <div class="slide">
-            <img src="./assets/img/gmm_16_2.png" alt="GMM candidate rate by ticker">
+            <img src="./assets/img/gmm_16_2.png" alt="Bar chart 'GMM candidate rate by ticker — 2025-10-08.'' Vertical bars sorted descending. PCG highest (~21%), then DECK (~16%), 
+            INTC (~14%), SMCI (~10%). Middle tickers around 3–7%. Several near 1–2% (TTD, KVUE, MCHP, ON, SLB, UBER, DOW).">
             <div class="slide-caption">Figure 5b: GMM candidate rate by ticker on test day showing variation across stocks.</div>
         </div>
         <div class="slide">
-            <img src="./assets/img/gmm_15_2.png" alt="PCA projection of flagged points">
+            <img src="./assets/img/gmm_15_2.png" alt="Scatter plot of test PCA projection (PC1 vs PC2). Blue dots = not flagged; orange dots = GMM-flagged. Blue cluster dense near center;
+             flagged points sparsely distributed toward the outer edges and along the negative PC2 tail. Title: 'Test PCA (colored by GMM candidate flag)'.">
             <div class="slide-caption">Figure 5c: PCA projection showing flagged candidates (orange) cluster in low-density regions away from normal events (blue).</div>
         </div>
         <div class="slide">
-            <img src="./assets/img/gmm_16_6.png" alt="Feature space scatter">
+            <img src="./assets/img/gmm_16_6.png" alt="Scatter plot of test-day points: x = feat_vwap_zscore, y = feat_bollinger_position. Blue (not flagged) form a dense, positively sloped ellipse around (0,0). 
+            Orange (flagged) are sparse, mostly at extremes and outer edges. Legend shows categories. Title notes date 2025-10-08.">
             <div class="slide-caption">Figure 5d: VWAP z-score vs. Bollinger position scatter plot with flagged events.</div>
         </div>
         <button class="slideshow-nav prev" onclick="changeSlide(this, -1)">&#10094;</button>
@@ -718,7 +726,12 @@
         is relaxed, precision quickly drops to the 0.50–0.55 range while recall increases. This tradeoff is 
         characteristic of a weak classifier: there is no "sweet spot" where both precision and recall are high.
     </p>
-    <img src="./assets/img/randomForest_6_0.png" alt="ROC and Precision-Recall curves">
+    <img src="./assets/img/randomForest_6_0.png" alt="The figure shows the out-of-sample performance of the Random Forest opportunity classifier on the held-out test day (October 8, 2025). 
+    The left panel plots the ROC curve, where the model’s blue line lies only modestly above the diagonal “Random” baseline, yielding an ROC AUC of 0.536; this indicates a weak but positive ability
+     to rank profitable reversions above non-reversions. The right panel shows the corresponding precision–recall curve: at very high probability thresholds the classifier attains near-perfect precision 
+     but at extremely low recall (only a handful of trades), and as the threshold is relaxed, precision quickly stabilizes in the 0.50–0.55 range while recall increases toward 1. Overall, the curves suggest 
+     that while the model does extract some predictive signal from the features, its discriminatory power is limited and any trading strategy built on these scores would need to rely on careful thresholding and 
+     risk management rather than expecting strong standalone classification accuracy.">
     <p class="img-caption">Figure 6: ROC and precision–recall curves on the held-out test day. The modest separation from baseline indicates weak but non-zero predictive power.</p>
     <p>
         <b>Feature Importances</b>. Gini‑based feature importances reveal that <code>feat_time_of_day</code> 
@@ -735,7 +748,12 @@
         reversion prediction requires a mix of time‑of‑day structure, local volatility/volume context, and 
         distance‑from‑value indicators rather than relying on any one strong signal.
     </p>
-    <img src="./assets/img/randomForest_7_2.png" alt="Feature importances">
+    <img src="./assets/img/randomForest_7_2.png" alt="This figure shows the top Random Forest feature importances for the opportunity classifier, measured using Gini importance over the training days. 
+    feat_time_of_day is the single most influential variable, indicating that when in the trading session an overextension occurs strongly affects whether it subsequently mean-reverts. The next group of 
+    features—feat_context_price_range and feat_context_avg_volume—captures the recent intraday volatility and local trading activity, suggesting that reversions are more predictable when the candidate occurs 
+    within specific short-horizon volatility and liquidity regimes. Microstructure and positioning signals such as feat_vwap_zscore and feat_bollinger_position also carry substantial weight, reflecting how far price 
+    is from recent value and band extremes at the moment the GMM flags an overextension. Secondary but still meaningful contributors include feat_relative_volume, short-horizon momentum measures (feat_momentum_5bar, feat_momentum_3bar), 
+    and the feat_context_bar_count, reinforcing the idea that the classifier relies primarily on a mix of time-of-day structure, local volatility/volume context, and distance-from-value indicators rather than on pure trend alone.">
     <p class="img-caption">Figure 7: Gini-based feature importances. Time-of-day, local volatility context, and price positioning signals are most influential.</p>
     <p>
         <b>Calibration, Probability Distributions, and Threshold Analysis</b>. Figure 8a shows the model is reasonably 
@@ -753,15 +771,30 @@
 
     <div class="slideshow-container" id="slideshow-rf">
         <div class="slide active">
-            <img src="./assets/img/randomForest_8_0.png" alt="Calibration curve and confusion matrix">
+            <img src="./assets/img/randomForest_8_0.png" alt="This figure summarizes the reliability and hard-decision performance of the Random Forest opportunity classifier on the held-out test day (October 8, 2025). 
+            The left panel shows a calibration curve, where the model’s predicted probabilities (x-axis) are grouped into quantile bins and compared against the empirical reversion frequency in each bin (y-axis). Most points 
+            fall in the 0.15–0.70 probability range, reflecting that the classifier rarely issues extremely confident predictions; they cluster around the diagonal “perfectly calibrated” line, with modest oscillations that indicate 
+            slight underestimation of risk at lower scores and occasional overconfidence at higher scores, but no systematic miscalibration. The right panel displays the 2×2 confusion matrix at the default 0.5 decision threshold: the 
+            model correctly classifies 136 non-reversion events and 104 reversion events, while mislabeling 86 non-reversions as reversions and 131 reversions as non-reversions. With total counts roughly balanced across the four cells, 
+            the confusion matrix reinforces the picture from the calibration plot—a reasonably calibrated but only weakly discriminative classifier, whose probabilities are usable as a soft ranking signal but whose binary decisions 
+            provide limited separation between profitable and non-profitable opportunities.">
             <div class="slide-caption">Figure 8a: Calibration curve and confusion matrix on test day. The model is well-calibrated but weakly discriminative.</div>
         </div>
         <div class="slide">
-            <img src="./assets/img/randomForest_9_1.png" alt="Predicted probability distributions by class">
+            <img src="./assets/img/randomForest_9_1.png" alt="This figure visualizes how the Random Forest’s predicted probabilities are distributed for each class on the held-out test day. The left panel overlays histograms of 
+            predicted reversion probabilities for non-reversion events (red) and reversion events (green), with the default decision threshold of 0.5 shown as a vertical dashed line. Both distributions are centered near the threshold 
+            and strongly overlap, but the green bars are slightly shifted to the right, indicating that true reversions tend to receive somewhat higher scores on average even though the separation is modest. The right panel shows the 
+            same information as side-by-side boxplots: the median predicted probability for reversion cases lies just above 0.5, while the non-reversion median lies just below, with overlapping interquartile ranges and several low-probability 
+            outliers in both groups. The dashed horizontal line again marks the 0.5 cutoff, highlighting that the classifier mainly operates in a narrow 0.4–0.6 probability band and provides only weak discrimination between the two classes.">
             <div class="slide-caption">Figure 8b: Predicted probability distributions by class showing substantial overlap between reversion and non-reversion events.</div>
         </div>
         <div class="slide">
-            <img src="./assets/img/randomForest_10_0.png" alt="Metrics vs decision threshold">
+            <img src="./assets/img/randomForest_10_0.png" alt="This figure illustrates how the Random Forest’s classification performance on the held-out test day varies with the decision threshold. The left panel plots 
+            precision, recall, and F1 score as functions of the threshold applied to the predicted reversion probabilities. At very low thresholds almost all candidates are classified as reversions, yielding recall near 1.0 
+            but only moderate precision around 0.5; the F1 curve peaks at an optimal threshold of roughly 0.02 (marked by the red dot), where the balance between precision and recall gives an F1 score of about 0.68. As the threshold 
+            increases toward the default 0.5 (vertical dashed line), recall drops sharply while precision improves only slightly, causing F1 to decline steadily. The right panel shows accuracy versus threshold, with the random-guess 
+            baseline at 0.5 indicated by a dotted line. Accuracy remains fairly flat at just above 0.5 across a wide range of thresholds, including both the default 0.5 and the F1-optimal 0.02 (red dot), confirming that no single cutoff 
+            yields a strong improvement in overall hit rate, and that threshold choice mainly trades off precision against recall rather than dramatically boosting accuracy.">
             <div class="slide-caption">Figure 8c: Precision, recall, F1, and accuracy vs. decision threshold. No operating point achieves both high precision and high recall.</div>
         </div>
         <button class="slideshow-nav prev" onclick="changeSlide(this, -1)">&#10094;</button>
