@@ -1,0 +1,74 @@
+{
+  "rf_proba_threshold": 0.3,
+  "feature_names": [
+    "feat_vwap_zscore",
+    "feat_bollinger_position",
+    "feat_momentum_3bar",
+    "feat_momentum_5bar",
+    "feat_relative_volume",
+    "feat_time_of_day",
+    "feat_context_bar_count",
+    "feat_context_avg_volume",
+    "feat_context_price_range"
+  ],
+  "train_days": [
+    "2025-10-02",
+    "2025-10-03",
+    "2025-10-06",
+    "2025-10-07"
+  ],
+  "test_day": "2025-10-08",
+  "q10_config": {
+    "quantile": 0.1,
+    "best_params": {
+      "n_estimators": 200,
+      "max_depth": 3,
+      "learning_rate": 0.05,
+      "min_samples_leaf": 20
+    },
+    "cv_mean_pinball": 0.0002022803734689543,
+    "cv_std_pinball": 4.724173243692403e-06,
+    "train_pinball": 0.00017677509919063737
+  },
+  "q50_config": {
+    "quantile": 0.5,
+    "best_params": {
+      "n_estimators": 100,
+      "max_depth": 3,
+      "learning_rate": 0.05,
+      "min_samples_leaf": 20
+    },
+    "cv_mean_pinball": 0.00046893725869805386,
+    "cv_std_pinball": 6.606519246095147e-05,
+    "train_pinball": 0.0004180358033136638
+  },
+  "test_metrics": {
+    "split": "test",
+    "n_samples": 417,
+    "y_true_mean": 6.679568959353822e-05,
+    "y_true_std": 0.001035601822117398,
+    "y_true_min": -0.0019852363654551623,
+    "y_true_max": 0.002334704162028902,
+    "quantile_metrics": {
+      "0.1": {
+        "pinball_loss": 0.00013287254375085803,
+        "coverage_rate": 0.09592326139088729,
+        "calibration_error": 0.004076738609112715,
+        "residual_mean": 0.0011597264639003192,
+        "residual_std": 0.001063472851576587,
+        "pred_mean": -0.0010929307743067812,
+        "pred_std": 0.0002493839696024041
+      },
+      "0.5": {
+        "pinball_loss": 0.0004805386004293062,
+        "coverage_rate": 0.6618705035971223,
+        "calibration_error": 0.1618705035971223,
+        "residual_mean": -0.0007866619742156562,
+        "residual_std": 0.0010395029467374713,
+        "pred_mean": 0.0008534576638091944,
+        "pred_std": 0.0001901271184888325
+      }
+    }
+  },
+  "preprocessing": "StandardScaler (fit on train days)"
+}
