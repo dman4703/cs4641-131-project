@@ -494,8 +494,75 @@
     </table>
 
     <h4>Supervised Exit Model</h4>
-    <p>Gradient‑boosted trees (trained on the events predicted to revert with high probability) to predict τ‑quantiles; we will use 
-        the 0.1 quantile as the stop loss condition and the 0.5 quantile as the target condition.</p>
+    <p>
+        Once the Random Forest classifies an overextension event as likely to revert, the next step is determining 
+        where to set dynamic exit levels: a stop‑loss to limit downside and a profit target to capture gains. 
+        Rather than using fixed price thresholds or volatility multiples, we train Gradient‑Boosted quantile regressors 
+        to predict the conditional distribution of forward returns (the price change from entry to exit). This approach has several advantages over traditional 
+        methods: it adapts exit levels dynamically based on current market conditions (captured by the same nine features), 
+        it provides probabilistic bounds rather than point estimates, and it can capture nonlinear relationships between 
+        features and return quantiles.
+    </p>
+    <p>
+        We chose Gradient Boosting Machines (GBM) for quantile regression over alternatives (linear quantile regression, 
+        quantile forests) for several reasons. First, GBMs handle nonlinear feature interactions effectively through 
+        sequential tree construction, which is important given the complex relationships between volatility, momentum, 
+        and expected returns. Second, scikit‑learn's <code>GradientBoostingRegressor</code> natively supports quantile 
+        loss (pinball loss), making implementation straightforward. Third, GBMs are computationally efficient for our 
+        moderately sized dataset (1,424 training samples) and provide interpretable feature importances. Fourth, the 
+        regularization parameters (tree depth, learning rate, minimum samples per leaf) help prevent overfitting to 
+        noise in the return distribution.
+    </p>
+    <p>
+        We train two separate GBM models to predict different quantiles of the forward return distribution:
+    </p>
+    <ul>
+        <li><b>Q10 Model (10th Percentile)</b>: Predicts the lower tail of the return distribution, serving as a 
+        dynamic stop‑loss level. By targeting the 10th percentile, we expect approximately 10% of realized returns 
+        to fall below this predicted value, giving a safe risk floor.</li>
+        <li><b>Q50 Model (50th Percentile / Median)</b>: Predicts the median expected return, serving as a profit 
+        target. This represents the "typical" outcome conditional on the features and provides a realistic exit 
+        point.</li>
+    </ul>
+    <p>
+        The models are trained on events that the Random Forest predicts will revert (RF probability ≥ 0.3), using 
+        the same day‑level Leave‑One‑Day‑Out (LODO) cross‑validation scheme on four training days (October 2, 3, 6, 7) 
+        and tested on the held‑out day (October 8). Hyperparameters are tuned via grid search over the number of 
+        estimators, tree depth, learning rate, and minimum samples per leaf, selecting configurations that minimize 
+        mean cross‑validated pinball loss.
+    </p>
+    <table>
+        <caption><strong>GBM Model Configuration</strong></caption>
+        <thead>
+            <tr>
+                <th>Parameter</th><th>Q10 (Stop-Loss)</th><th>Q50 (Target)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Model Type</td><td>GradientBoostingRegressor</td><td>GradientBoostingRegressor</td></tr>
+            <tr><td>Loss Function</td><td>quantile (alpha=0.1)</td><td>quantile (alpha=0.5)</td></tr>
+            <tr><td>n_estimators</td><td>200</td><td>100</td></tr>
+            <tr><td>max_depth</td><td>3</td><td>3</td></tr>
+            <tr><td>learning_rate</td><td>0.05</td><td>0.05</td></tr>
+            <tr><td>min_samples_leaf</td><td>20</td><td>20</td></tr>
+            <tr><td>Train Samples</td><td>1,424</td><td>1,424</td></tr>
+            <tr><td>Test Samples</td><td>417</td><td>417</td></tr>
+            <tr><td>Features</td><td>9</td><td>9</td></tr>
+        </tbody>
+    </table>
+    <p>
+        Both models converged to shallow trees (depth 3) and conservative learning rates (0.05), suggesting that 
+        the return distribution is noisy and benefits from regularization. The Q10 model required more estimators 
+        (200 vs. 100) to capture the lower‑tail dynamics, which are inherently sparser and more variable than 
+        the median. The figure below shows the distribution of forward returns used as targets. The left histogram reveals 
+        a bimodal pattern with distinct peaks on either side of zero. This is a consequence of the triple‑barrier 
+        labeling, where trades typically exit at profit‑taking or stop‑loss levels rather than at arbitrary prices. 
+        This bimodality motivates the use of quantile regression rather than mean regression, as the conditional 
+        mean would fall between the modes and represent neither typical outcome.
+    </p>
+    <img src="./assets/img/gbm_7_0.png" alt="Two histograms showing forward return distribution. Left: all events aggregated showing tight, near-symmetric distribution around zero. 
+    Right: returns stratified by triple-barrier label showing separation between profitable (label +1) and losing (label -1) outcomes.">
+    <p class="img-caption">Figure 4b: Distribution of forward returns used as targets for GBM quantile regression.</p>
 
     <h2><u>Results & Discussion</u></h2>
 
@@ -834,7 +901,130 @@
     </p>
 
     <h3>Supervised Exit Model</h3>
-    <p>TBD. Quantile Loss, Pinball Loss, Backtest profit & loss.</p>
+    <p>
+        <b>Cross-Validation and Hyperparameter Selection</b>. We tuned both quantile models using day‑level LODO 
+        cross‑validation on the four training days. Each fold held out one day for validation while training on the 
+        remaining three days, selecting hyperparameters that minimize mean cross‑validated pinball loss - the 
+        asymmetric loss function that penalizes under-predictions by τ and over-predictions by (1−τ), where lower 
+        values indicate better quantile estimation. The Q10 model achieved a CV mean pinball loss of 0.000202 ± 0.000005, 
+        demonstrating highly stable performance across folds. The Q50 model achieved a CV mean pinball loss of 
+        0.000469 ± 0.000066, showing more variability, reflecting the inherent difficulty in predicting median returns 
+        compared to downside tails.
+    </p>
+    <table>
+        <caption><strong>GBM Performance Summary</strong></caption>
+        <thead>
+            <tr>
+                <th>Metric</th><th>Q10 (Stop-Loss)</th><th>Q50 (Target)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>CV Mean Pinball Loss</td><td>0.000202</td><td>0.000469</td></tr>
+            <tr><td>CV Std Pinball Loss</td><td>0.000005</td><td>0.000066</td></tr>
+            <tr><td>Train Pinball Loss</td><td>0.000177</td><td>0.000418</td></tr>
+            <tr><td>Test Pinball Loss</td><td>0.000133</td><td>0.000481</td></tr>
+            <tr><td>Test Coverage Rate</td><td>9.6%</td><td>66.2%</td></tr>
+            <tr><td>Expected Coverage</td><td>10.0%</td><td>50.0%</td></tr>
+            <tr><td>Calibration Error</td><td>0.004</td><td>0.162</td></tr>
+        </tbody>
+    </table>
+    <p>
+        <b>Test Day Performance</b>. On the held‑out test day (October 8), the models exhibited contrasting behavior. 
+        The Q10 model achieved near‑perfect calibration: the test coverage rate (the fraction of actual returns 
+        falling below the predicted quantile) of 9.6% is very close to the expected 10%, with a calibration error 
+        (|actual − expected| coverage) of only 0.004. This means that approximately 10% of actual returns fell below the 
+        predicted stop‑loss level. Remarkably, the test pinball loss (0.000133) was lower than the training loss (0.000177), 
+        suggesting that downside risk was particularly predictable on the test day.
+    </p>
+    <p>
+        In contrast, the Q50 model showed significant miscalibration on the test day. The coverage rate of 66.2% 
+        exceeded the expected 50%, resulting in a calibration error of 0.162. This means that realized returns 
+        fell below the predicted median target 66% of the time instead of 50% - the model was systematically 
+        optimistic about potential upside. The test pinball loss (0.000481) increased slightly from training 
+        (0.000418), indicating modest generalization degradation.
+    </p>
+    <img src="./assets/img/gbm_23_0.png" alt="Coverage rate calibration chart comparing expected vs actual coverage rates for Q10 and Q50 quantiles across train and test sets. 
+    Q10 shows near-perfect alignment at 10% across both sets, while Q50 shows significant miscalibration with test coverage at 66.2% vs expected 50%.">
+    <p class="img-caption">Figure 9: Coverage rate calibration for both quantile models. Q10 achieves near-perfect calibration while Q50 overestimates upside potential on the test day.</p>
+    <p>
+        <b>Predictions vs. Actual Returns</b>. The scatter plots below visualize how well each model's predictions 
+        align with realized returns on the test day. The "double cluster" pattern in both plots results 
+        from the triple‑barrier labeling method, where trades exit at specific volatility bands or time limits 
+        rather than continuously. For the Q10 model, the cluster on the diagonal represents stopped‑out trades where 
+        realized loss matched the prediction, while the upper cluster represents profitable holds that exceeded 
+        the risk floor. For the Q50 model, the diagonal cluster marks successful profit‑taking, while the lower 
+        off‑diagonal cluster comprises failed reversions that fell short of the predicted median target.
+    </p>
+    <img src="./assets/img/gbm_21_0.png" alt="Two scatter plots showing Q10 and Q50 predictions vs actual returns on test day. Both show characteristic double-cluster patterns 
+    from triple-barrier exits. Q10 (left) shows 9.6% coverage with good diagonal alignment for stopped-out trades. Q50 (right) shows 66.2% coverage with 
+    many returns falling below predicted targets.">
+    <p class="img-caption">Figure 10: Quantile predictions vs. actual returns on test day. The double-cluster pattern reflects triple-barrier exit dynamics.</p>
+    <p>
+        <b>Dynamic Exit Corridors</b>. Figure 11 visualizes the prediction bands produced by the two quantile models, 
+        with samples sorted by realized return. The blue shaded region represents the expected trading range bounded 
+        by Q10 (stop‑loss) and Q50 (profit target). The fluctuating width demonstrates the model's ability to adapt 
+        risk limits dynamically to changing market volatility - wider bands during volatile conditions and tighter 
+        bands during calmer periods. The black line (actual returns) breaks through the lower Q10 boundary only at the 
+        extreme left, indicating precise downside calibration. Conversely, the black line remains within the band 
+        for much of the right side, visually illustrating why Q50 coverage was higher than expected: many profitable 
+        trades failed to reach the model's targets.
+    </p>
+    <img src="./assets/img/gbm_27_0.png" alt="Line chart showing prediction bands over sorted actual values. Samples sorted by realized return on x-axis. 
+    Blue shaded region shows Q10-Q50 band, black line shows actual returns. Band width varies demonstrating dynamic volatility adaptation. 
+    Actual returns pierce lower boundary only at extreme left tail.">
+    <p class="img-caption">Figure 11: Dynamic exit corridors showing Q10–Q50 prediction bands. The varying width reflects volatility-adaptive risk limits.</p>
+    <p>
+        <b>Feature Importances</b>. Unlike the Random Forest entry model where time‑of‑day and price positioning features 
+        dominated, the GBM exit models rely almost exclusively on "contextual" features. Specifically, 
+        <code>feat_time_of_day</code>, <code>feat_context_bar_count</code>, and <code>feat_context_price_range</code> 
+        collectively account for the vast majority of predictive power in both models. This indicates that dynamic 
+        stop and target levels are driven primarily by prevailing market volatility and liquidity conditions rather 
+        than the specific degree of price overextension (e.g., <code>feat_vwap_zscore</code>). Essentially, while 
+        price extremes signal when to trade, the market environment (time and recent activity) dictates 
+        how far the price is likely to move.
+    </p>
+    <img src="./assets/img/gbm_25_0.png" alt="Horizontal bar charts showing feature importances for Q10 and Q50 models. Both show time_of_day, context_bar_count, 
+    context_price_range, and context_avg_volume as dominant features. Traditional mean-reversion indicators like vwap_zscore and bollinger_position 
+    rank lower, indicating exit levels depend more on market conditions than price positioning.">
+    <p class="img-caption">Figure 12: Feature importances reveal that exit levels depend primarily on market context (time, volatility, activity) rather than price positioning signals.</p>
+    <p>
+        <b>Why Did the Models Perform Differently?</b> The divergent performance between Q10 and Q50 models reveals 
+        asymmetries in return predictability. The Q10 model's better calibration suggests that 
+        downside risk (the probability of hitting a stop‑loss) is relatively stable and predictable from market 
+        context features. This is because volatility regimes and liquidity conditions strongly 
+        influence how far prices can move against a position.
+    </p>
+    <p>
+        The Q50 model's overestimation of upside can be attributed to several factors. First, the training 
+        period (October 2–7) may have exhibited stronger mean‑reversion dynamics than the test day (October 8), 
+        causing the model to learn optimistic targets that didn't generalize. Second, predicting the median 
+        is inherently harder than predicting tail quantiles because it requires capturing the central tendency 
+        of a noisy, potentially multimodal distribution. Third, the test day may have experienced regime 
+        shifts (news events, changed market sentiment) that reduced reversion magnitudes 
+        without triggering stop‑losses.
+    </p>
+    <p>
+        <b>Implications for Trading</b>. The calibration results have important implications for live trading:
+    </p>
+    <ul>
+        <li><b>Risk Management</b>: The well‑calibrated Q10 stop‑loss can be used directly for position sizing 
+        and risk limits; knowing that approximately 10% of trades will hit the predicted floor provides a 
+        reliable worst‑case estimate.</li>
+        <li><b>Profit Targets</b>: The Q50 targets should be treated as optimistic estimates. In practice, 
+        traders might scale targets down by a factor (e.g., 0.8×) or use a lower quantile (Q40 or Q30) as 
+        the profit target to improve calibration.</li>
+        <li><b>Dynamic Adjustment</b>: The varying band widths suggest that exit levels should be recalculated 
+        as market conditions evolve within a trade, not just at entry.</li>
+    </ul>
+    <p>
+        <b>Next Steps and Potential Improvements</b>. To improve the exit model, incorporating additional features such as order‑book imbalance or intraday 
+        volatility forecasts might improve Q50 calibration. Additionally, ensemble methods combining multiple quantile 
+        models or conformalized quantile regression could provide better uncertainty estimates. The 
+        0.3 RF probability threshold for sample selection could be tuned jointly with the GBM hyperparameters 
+        to optimize downstream trading performance. Despite the Q50 miscalibration, the overall framework 
+        demonstrates that GBM quantile regression provides a principled approach to dynamic 
+        exit level prediction for mean‑reversion trading.
+    </p>
     
     <h3>Full Pipeline</h3>
     <p>TBD. Hit Rate, Win/loss ratio, Total profit & loss, Sharpe Ratio. Essentially run a trading simulation with actual entry/exit levels 
