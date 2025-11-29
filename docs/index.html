@@ -560,9 +560,11 @@
         This bimodality motivates the use of quantile regression rather than mean regression, as the conditional 
         mean would fall between the modes and represent neither typical outcome.
     </p>
-    <img src="./assets/img/gbm_7_0.png" alt="Two histograms showing forward return distribution. Left: all events aggregated showing tight, near-symmetric distribution around zero. 
-    Right: returns stratified by triple-barrier label showing separation between profitable (label +1) and losing (label -1) outcomes.">
-    <p class="img-caption">Figure 4b: Distribution of forward returns used as targets for GBM quantile regression.</p>
+    <img src="./assets/img/gbm_7_0.png" alt="Distribution of forward returns used as targets for GBM quantile regression. The left panel displays the aggregated distribution for all RF-flagged overextension events, 
+    revealing a distinct bimodal structure centered at zero with most returns falling within ±40 basis points. The right panel stratifies these returns by their triple-barrier outcome, identifying the source of this bimodality: 
+    Label −1 events (blue) cluster in negative territory (stop-losses), while Label +1 events (green) cluster in positive territory (profit-taking). Label 0 events (orange) are rare. This separation confirms that the volatility-based 
+    barriers force trades into distinct outcomes, motivating the use of quantile regression to model these specific tails rather than a conditional mean.">
+    <p class="img-caption">Bimodal forward returns reflecting distinct stop-loss and profit-taking outcomes from triple-barrier labeling.</p>
 
     <h2><u>Results & Discussion</u></h2>
 
@@ -943,35 +945,41 @@
         optimistic about potential upside. The test pinball loss (0.000481) increased slightly from training 
         (0.000418), indicating modest generalization degradation.
     </p>
-    <img src="./assets/img/gbm_23_0.png" alt="Coverage rate calibration chart comparing expected vs actual coverage rates for Q10 and Q50 quantiles across train and test sets. 
-    Q10 shows near-perfect alignment at 10% across both sets, while Q50 shows significant miscalibration with test coverage at 66.2% vs expected 50%.">
+    <img src="./assets/img/gbm_23_0.png" alt="This figure assesses model calibration by comparing expected quantile coverage (green) against realized training (blue) and testing (orange) rates. 
+    The Q10 Stop-Loss model (left) demonstrates exceptional stability, with a test coverage of 9.6% nearly identical to the theoretical 10%, confirming precise downside risk estimation. Conversely, 
+    the Q50 Target model (right) reveals significant misalignment on the test set; the 66.2% coverage far exceeds the expected 50%. This implies that realized returns fell below the predicted median more 
+    frequently than statistically expected, indicating the model was overly optimistic about potential upside on the test day.">
     <p class="img-caption">Figure 9: Coverage rate calibration for both quantile models. Q10 achieves near-perfect calibration while Q50 overestimates upside potential on the test day.</p>
     <p>
         <b>Predictions vs. Actual Returns</b>. The scatter plots below visualize how well each model's predictions 
         align with realized returns on the test day. The "double cluster" pattern in both plots results 
-        from the triple‑barrier labeling method, where trades exit at specific volatility bands or time limits 
-        rather than continuously. For the Q10 model, the cluster on the diagonal represents stopped‑out trades where 
+        from the triple‑barrier labeling method, where trades predominantly exit at volatility-scaled price barriers 
+        (profit-taking or stop-loss) rather than at the time horizon. For the Q10 model, the cluster on the diagonal represents stopped‑out trades where 
         realized loss matched the prediction, while the upper cluster represents profitable holds that exceeded 
         the risk floor. For the Q50 model, the diagonal cluster marks successful profit‑taking, while the lower 
         off‑diagonal cluster comprises failed reversions that fell short of the predicted median target.
     </p>
-    <img src="./assets/img/gbm_21_0.png" alt="Two scatter plots showing Q10 and Q50 predictions vs actual returns on test day. Both show characteristic double-cluster patterns 
-    from triple-barrier exits. Q10 (left) shows 9.6% coverage with good diagonal alignment for stopped-out trades. Q50 (right) shows 66.2% coverage with 
-    many returns falling below predicted targets.">
+    <img src="./assets/img/gbm_21_0.png" alt="This figure evaluates the Gradient Boosted Quantile Regressors on the held-out test day (October 8, 2025). The 'double cluster' pattern in both plots results from the triple-barrier 
+    labeling method, where trades force-exit at specific volatility bands or time limits rather than continuously. The left panel (Q10 Stop-Loss) achieves precise 9.6% coverage; the diagonal cluster represents stopped-out trades where 
+    realized loss matched the prediction, while the upper cluster represents profitable holds. Conversely, the right panel (Q50 Target) shows 66.2% coverage; the diagonal cluster marks successful profit-taking, while 
+    the lower off-diagonal cluster comprises failed reversions that fell short of the predicted median.">
     <p class="img-caption">Figure 10: Quantile predictions vs. actual returns on test day. The double-cluster pattern reflects triple-barrier exit dynamics.</p>
     <p>
         <b>Dynamic Exit Corridors</b>. Figure 11 visualizes the prediction bands produced by the two quantile models, 
         with samples sorted by realized return. The blue shaded region represents the expected trading range bounded 
         by Q10 (stop‑loss) and Q50 (profit target). The fluctuating width demonstrates the model's ability to adapt 
-        risk limits dynamically to changing market volatility - wider bands during volatile conditions and tighter 
-        bands during calmer periods. The black line (actual returns) breaks through the lower Q10 boundary only at the 
-        extreme left, indicating precise downside calibration. Conversely, the black line remains within the band 
-        for much of the right side, visually illustrating why Q50 coverage was higher than expected: many profitable 
-        trades failed to reach the model's targets.
+        risk limits dynamically to changing market volatility—wider bands during volatile conditions and tighter 
+        bands during calmer periods. Because most trades exit at price barriers rather than timing out, the bimodal 
+        return distribution creates distinct clusters at the extremes. The black line (actual returns) breaks through 
+        the lower Q10 boundary only at the extreme left, indicating precise downside calibration. Conversely, the 
+        black line remains within the band for much of the right side, visually illustrating why Q50 coverage was 
+        higher than expected: many profitable trades failed to reach the model's targets.
     </p>
-    <img src="./assets/img/gbm_27_0.png" alt="Line chart showing prediction bands over sorted actual values. Samples sorted by realized return on x-axis. 
-    Blue shaded region shows Q10-Q50 band, black line shows actual returns. Band width varies demonstrating dynamic volatility adaptation. 
-    Actual returns pierce lower boundary only at extreme left tail.">
+    <img src="./assets/img/gbm_27_0.png" alt="This figure visualizes the dynamic trade management corridors predicted for the test day. Samples are sorted by realized return (black line) 
+    to display the distribution from maximum loss (left) to maximum profit (right). The blue shaded region represents the expected trading range, bounded by the predicted Q10 stop-loss and Q50 
+    profit target. The fluctuating width of this band demonstrates the model's ability to adapt risk limits dynamically to changing market volatility. The black line punctures the lower Q10 boundary 
+    only at the far left, confirming precise downside calibration. Conversely, the black line stays within the band for much of the right side, visually illustrating why the Q50 target coverage (66.2%) 
+    was higher than expected—many profitable trades failed to reach the model's ambitious targets.">
     <p class="img-caption">Figure 11: Dynamic exit corridors showing Q10–Q50 prediction bands. The varying width reflects volatility-adaptive risk limits.</p>
     <p>
         <b>Feature Importances</b>. Unlike the Random Forest entry model where time‑of‑day and price positioning features 
@@ -983,9 +991,11 @@
         price extremes signal when to trade, the market environment (time and recent activity) dictates 
         how far the price is likely to move.
     </p>
-    <img src="./assets/img/gbm_25_0.png" alt="Horizontal bar charts showing feature importances for Q10 and Q50 models. Both show time_of_day, context_bar_count, 
-    context_price_range, and context_avg_volume as dominant features. Traditional mean-reversion indicators like vwap_zscore and bollinger_position 
-    rank lower, indicating exit levels depend more on market conditions than price positioning.">
+    <img src="./assets/img/gbm_25_0.png" alt="This figure illustrates the feature importances for the Gradient Boosted Quantile Regressors. Unlike the entry model where price location 
+    was significant, the exit models rely almost exclusively on 'contextual' features—specifically `feat_time_of_day`, `feat_context_bar_count`, and `feat_context_price_range`—which collectively 
+    account for the vast majority of predictive power. This indicates that dynamic stop and target levels are driven primarily by the prevailing market volatility and liquidity conditions 
+    rather than the specific degree of price overextension (e.g., `feat_vwap_zscore`). Essentially, while price extremes signal *when* to trade, the market environment (time and recent activity) 
+    dictates *how far* the price is likely to move.">
     <p class="img-caption">Figure 12: Feature importances reveal that exit levels depend primarily on market context (time, volatility, activity) rather than price positioning signals.</p>
     <p>
         <b>Why Did the Models Perform Differently?</b> The divergent performance between Q10 and Q50 models reveals 
@@ -1027,13 +1037,132 @@
     </p>
     
     <h3>Full Pipeline</h3>
-    <p>TBD. Hit Rate, Win/loss ratio, Total profit & loss, Sharpe Ratio. Essentially run a trading simulation with actual entry/exit levels 
-        vs. predicted stops/targets.</p>
+    <p>
+        The full trading pipeline was evaluated on the held‑out test day (October 8, 2025) using 417 trades that passed 
+        both the GMM overextension filter and the RF probability threshold (≥ 0.3). Trade direction was determined by 
+        VWAP z‑score: negative = LONG (expecting price to rise toward VWAP), positive = SHORT (expecting price to fall 
+        toward VWAP). Entry occurs when RF probability exceeds the threshold, and exit is based on the triple‑barrier 
+        outcome using GBM‑predicted Q10 stop‑loss and Q50 profit target levels.
+    </p>
+    <table>
+        <caption><strong>Full Pipeline Performance</strong></caption>
+        <thead>
+            <tr>
+                <th>Metric</th><th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Total Trades</td><td>417</td></tr>
+            <tr><td>Wins / Losses / Timeouts</td><td>218 / 195 / 4</td></tr>
+            <tr><td>Hit Rate</td><td>52.3%</td></tr>
+            <tr><td>Win/Loss Ratio</td><td>1.03</td></tr>
+            <tr><td>Total P&L</td><td>0.027854 (278.54 bps)</td></tr>
+            <tr><td>Mean P&L per Trade</td><td>0.000067</td></tr>
+            <tr><td>Sharpe Ratio</td><td>1.32</td></tr>
+        </tbody>
+    </table>
+    <p>
+        <b>Interpretation</b>. The hit rate (the fraction of trades that reached the profit target before 
+        hitting the stop‑loss or timing out) came in at 52.3%, meaning just over half of all predicted mean‑reversion 
+        opportunities successfully closed at a profit. The win/loss ratio, which compares the average magnitude 
+        of winning trades to losing trades, was 1.03; this indicates that when we win, we capture slightly more return 
+        than we give back when we lose, a necessary condition for profitability when hit rates hover near 50%. 
+        Total P&L(profit and loss) measures the cumulative return across all trades: at 0.027854, or 
+        equivalently 278.54 basis points, the pipeline generated meaningful positive returns on the test day. Finally, 
+        the Sharpe ratio, a risk‑adjusted performance measure calculated asthe mean return divided by the standard deviation of returns, 
+        was 1.32. A Sharpe above 1.0 is generally considered strong for intraday 
+        strategies, suggesting that the pipeline's gains are not merely a product of excessive risk‑taking. Taken 
+        together, these metrics demonstrate that the combined GMM → RF → GBM pipeline produces profitable, 
+        risk‑controlled signals on out‑of‑sample data.
+    </p>
+
+    <div class="slideshow-container" id="slideshow-fullpipeline">
+        <div class="slide active">
+            <img src="./assets/img/fullPipeline_12_0.png" alt="Cumulative intraday performance of the full mean‑reversion pipeline on the held‑out test day (2025‑10‑08). Each point 
+            represents a single trade, ordered chronologically, with the green line showing cumulative P&L in log‑return space. Green markers denote trades that hit 
+            the GBM‑based profit target, while red markers correspond to stop‑outs. The early drawdown is followed by a strong recovery and a steady late‑session grind 
+            higher that produces positive total P&L and a Sharpe ratio of 1.32.">
+            <div class="slide-caption">Figure 13a: Cumulative P&L over trades showing early drawdown followed by recovery and steady late-session gains.</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/fullPipeline_13_0.png" alt="Distribution of per‑trade returns by exit outcome. The left panel shows histograms for wins (green), losses (red), and 
+            timeouts (gray), with a vertical blue line marking the slightly positive overall mean return. Winning trades cluster tightly around small positive returns, 
+            while losing trades form a wider, clearly separated cluster of modest negatives. The right panel displays boxplots, highlighting that median wins exceed 
+            median losses in magnitude.">
+            <div class="slide-caption">Figure 13b: Distribution of trade returns by outcome showing histograms and boxplots for wins, losses, and timeouts.</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/fullPipeline_14_0.png" alt="Scatter plots evaluating how well the GBM quantile exit model's predictions align with realized trade 
+            returns. The left panel compares actual returns to the predicted Q10 stop‑loss level: losing trades (red) cluster just below the negative quantile, 
+            while winning trades (green) stay comfortably above zero. The right panel compares actual returns to the predicted Q50 target: winners cluster around 
+            and above the positive median forecast, whereas losses sit below zero.">
+            <div class="slide-caption">Figure 13c: Scatter plots comparing actual returns to predicted Q10 stop-loss and Q50 target levels.</div>
+        </div>
+        <div class="slide">
+            <img src="./assets/img/fullPipeline_15_0.png" alt="Per‑ticker performance on the test day. The left panel plots hit rate with a dashed 
+            vertical line at the 50% breakeven threshold. Green bars indicate tickers with hit rates above 50%, while red bars mark underperformers. 
+            SMCI, DXCM, XYZ and KVUE show especially strong win fractions. The right panel shows corresponding total P&L by ticker, revealing that a 
+            handful of names generate most of the day's profits.">
+            <div class="slide-caption">Figure 13d: Per-ticker performance showing hit rate and total P&L by ticker.</div>
+        </div>
+        <button class="slideshow-nav prev" onclick="changeSlide(this, -1)">&#10094;</button>
+        <button class="slideshow-nav next" onclick="changeSlide(this, 1)">&#10095;</button>
+        <div class="dots-container">
+            <span class="dot active" onclick="currentSlide(this, 0)"></span>
+            <span class="dot" onclick="currentSlide(this, 1)"></span>
+            <span class="dot" onclick="currentSlide(this, 2)"></span>
+            <span class="dot" onclick="currentSlide(this, 3)"></span>
+        </div>
+    </div>
+
+    <p>
+        <b>Per‑Ticker Breakdown</b>. Performance varied substantially across tickers. The table below shows the top and 
+        bottom performers sorted by total P&L. SMCI, DXCM, and XYZ contributed the most profit with hit rates exceeding 
+        60%, while INTC, DLTR, and ON were the largest detractors. Half of the 20 tickers (10/20) achieved positive P&L, 
+        and 8/20 exceeded the 50% hit rate threshold.
+    </p>
+    <table>
+        <caption><strong>Performance by Ticker (Sorted by Total P&L)</strong></caption>
+        <thead>
+            <tr>
+                <th>Ticker</th><th>Trades</th><th>Wins</th><th>Losses</th><th>Hit Rate</th><th>Total P&L</th><th>Sharpe</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>SMCI</td><td>79</td><td>48</td><td>31</td><td>60.8%</td><td>0.026667</td><td>2.36</td></tr>
+            <tr><td>DXCM</td><td>15</td><td>13</td><td>2</td><td>86.7%</td><td>0.011981</td><td>3.85</td></tr>
+            <tr><td>XYZ</td><td>13</td><td>10</td><td>3</td><td>76.9%</td><td>0.008798</td><td>2.00</td></tr>
+            <tr><td>PCG</td><td>143</td><td>75</td><td>68</td><td>52.4%</td><td>0.002838</td><td>0.31</td></tr>
+            <tr><td>CCL</td><td>11</td><td>6</td><td>5</td><td>54.5%</td><td>0.001907</td><td>0.54</td></tr>
+            <tr><td>KVUE</td><td>4</td><td>3</td><td>1</td><td>75.0%</td><td>0.001561</td><td>1.01</td></tr>
+            <tr><td>FCX</td><td>16</td><td>8</td><td>8</td><td>50.0%</td><td>0.000835</td><td>0.22</td></tr>
+            <tr><td>UBER</td><td>1</td><td>1</td><td>0</td><td>100.0%</td><td>0.000572</td><td>—</td></tr>
+            <tr><td>TTD</td><td>5</td><td>2</td><td>3</td><td>40.0%</td><td>0.000157</td><td>0.07</td></tr>
+            <tr><td>MCHP</td><td>2</td><td>1</td><td>1</td><td>50.0%</td><td>0.000029</td><td>0.01</td></tr>
+            <tr><td>DAL</td><td>12</td><td>7</td><td>5</td><td>58.3%</td><td>−0.000039</td><td>−0.01</td></tr>
+            <tr><td>SLB</td><td>1</td><td>0</td><td>1</td><td>0.0%</td><td>−0.000679</td><td>—</td></tr>
+            <tr><td>CNC</td><td>10</td><td>5</td><td>5</td><td>50.0%</td><td>−0.000763</td><td>−0.24</td></tr>
+            <tr><td>DECK</td><td>13</td><td>4</td><td>5</td><td>30.8%</td><td>−0.000946</td><td>−0.16</td></tr>
+            <tr><td>DOW</td><td>2</td><td>0</td><td>2</td><td>0.0%</td><td>−0.001113</td><td>−66.23</td></tr>
+            <tr><td>NCLH</td><td>10</td><td>4</td><td>6</td><td>40.0%</td><td>−0.001573</td><td>−0.61</td></tr>
+            <tr><td>EQT</td><td>9</td><td>4</td><td>5</td><td>44.4%</td><td>−0.001988</td><td>−0.43</td></tr>
+            <tr><td>ON</td><td>3</td><td>0</td><td>3</td><td>0.0%</td><td>−0.003084</td><td>−6.79</td></tr>
+            <tr><td>DLTR</td><td>8</td><td>2</td><td>6</td><td>25.0%</td><td>−0.005091</td><td>−1.60</td></tr>
+            <tr><td>INTC</td><td>60</td><td>25</td><td>35</td><td>41.7%</td><td>−0.012217</td><td>−1.53</td></tr>
+        </tbody>
+    </table>
+    <p>
+        <b>Summary</b>. The full pipeline demonstrates that combining unsupervised anomaly detection (GMM) with 
+        supervised classification (RF) and quantile‑based exit prediction (GBM) produces a viable mean‑reversion 
+        trading strategy. The positive Sharpe ratio and overall profitability on the out‑of‑sample test day validate 
+        the pipeline architecture, though per‑ticker variability suggests that future work could incorporate 
+        ticker‑specific models or dynamic ticker selection to improve consistency.
+    </p>
 
     <h2><u>Team Logistics</u></h2>
 
     <h3>Gantt Chart</h3>
-    <a href="./assets/img/ganttChartUpdate.png" target="_blank"><img src="./assets/img/ganttChartUpdate.png" alt="Gantt Chart"></a>
+    <a href="./assets/img/ganttChartUpdate2.png" target="_blank"><img src="./assets/img/ganttChartUpdate2.png" alt="Gantt Chart"></a>
 
     <h3>Contribution Table</h3>
     <table>
@@ -1048,6 +1177,7 @@
                 <td>Devon O'Quinn</td>
                 <td>Random Forest Model Coding & Evaluation, 
                     <br>GBM Model Coding & Evaluation, 
+                    <br>Full Pipeline Evaluation, 
                     <br>Report Writing (Tables, Plots), Presentation</td>
             </tr>
             <tr>
@@ -1114,7 +1244,6 @@
             const container = element.closest('.slideshow-container');
             const containerId = container.id;
             
-            // Initialize state if needed
             if (!(containerId in slideshowStates)) {
                 slideshowStates[containerId] = 0;
             }
