@@ -1,7 +1,4 @@
 # Mean Reversion Trading with Machine Learning
-CS4641 Group 131
-
-Devon O'Quinn, Shayali Patel, Nicholas Nitsche, Julien Perez, Mutimu Njenga
 
 **Report:** <https://github.gatech.edu/pages/doquinn3/cs4641-131-project/>
 
